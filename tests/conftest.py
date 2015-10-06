@@ -1,7 +1,6 @@
 '''
 unit testing
 '''
-import pytest
 import logging
 from pysipp.utils import LOG_FORMAT
 

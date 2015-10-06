@@ -1,7 +1,6 @@
 '''
 Basic agent/scenario launching
 '''
-import pytest
 from pysipp.agent import client, server
 from pysipp.launch import PopenRunner
 
