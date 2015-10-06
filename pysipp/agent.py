@@ -2,9 +2,11 @@
 Wrappers for user agents which apply sensible cmdline arg defaults
 '''
 from os import path
-from collections import deque, namedtuple
+from collections import namedtuple
 from .command import SippCmd
+import utils
 
+log = utils.get_logger()
 
 SocketAddr = namedtuple('SocketAddr', 'ip port')
 
@@ -49,31 +51,51 @@ class UserAgent(object):
     @proxy.setter
     def proxy(self, pair):
         self._proxy = SocketAddr(*pair)
-        self._cmd.proxy = '[{}]:{}'.format(*self._proxy)
+        self._cmd.proxy_addr = '[{}]'.format(self._proxy.ip)
+        self._cmd.proxy_port = self._proxy.port
 
 
-spec = deque((
+spec = [
     # contact info
     '{remote_host}:{remote_port}',
     '-i {local_host}',
     '-p {local_port}',
-    '-recv_timeout {msg_timeout}',
     '-s {uri_username}',
-    '-rsa {proxy}',
-    # scenario related
+    '-rsa {proxy_addr}:{proxy_port}',
+    '-auth_uri {auth_uri}',
+    # sockets and protocols
+    '-bind_local {bind_local}',
+    '-mi {media_addr}',
+    '-mp {media_port}',
+    '-t {transport}',
+    # scenario config/ctl
     '-sn {scen_name}',
     '-sf {scen_file}',
+    '-recv_timeout {recv_timeout}',
+    '-d {pause_duration}',
+    '-default_behaviors {default_behaviors}',
+    '-3pcc {3pcc}',
+    # SIP vars
+    '-cid_str {cid_str}',
+    '-base_cseq {base_cseq}',
+    '-ap {auth_password}',
     # load settings
-    '-d {duration}',
     '-r {rate}',
     '-l {limit}',
-    '-m {call_count}'
-    # call behaviour
-    '-base_cseq {base_cseq}',
-    '-cid_str {cid_str}',
-    # overall behaviour
+    '-m {call_count}',
+    '-rp {rate_period}',
+    # data insertion
     '-key {key_vals}',
-))
+    # files
+    '-error_file {error_file}',
+    '-calldebug_file {calldebug_file}',
+    '-message_file {message_file}',
+    '-log_file {log_file}',
+    '-inf {info_file}',
+    '-screen_file {screen_file}',
+    # bool flags
+    # '-rtp_echo',
+]
 
 
 def path2namext(filepath):
@@ -83,18 +105,21 @@ def path2namext(filepath):
 
 def ua(spec=spec, **kwargs):
     defaults = {
-        'msg_timeout': 5000
+        'recv_timeout': 5000,
+        'call_count': 1,
     }
+
+    log.debug("defaults are {} extras are {}".format(
+        defaults, kwargs))
     # override with user settings
     defaults.update(kwargs)
-    cmd = SippCmd(spec, fields=defaults)
+    cmd = SippCmd(spec)
 
-    # apply kwargs raising attr erros along the way
-    for name, value in kwargs.items():
+    # apply attrs raising erros along the way
+    for name, value in defaults.items():
         setattr(cmd, name, value)
 
     return cmd
-    # return UserAgent(cmd)
 
 
 def server(**kwargs):
