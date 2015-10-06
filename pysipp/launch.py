@@ -1,17 +1,15 @@
 """
 Launchers for invoking SIPp user agents
 """
-import os
 import subprocess
 import shlex
 import select
 import threading
-import logging
+import utils
 import signal
 from collections import OrderedDict, namedtuple
 
-log = logging.getLogger(__name__)
-
+log = utils.get_logger()
 
 Streams = namedtuple("Streams", "stdout stderr")
 
@@ -39,13 +37,12 @@ class PopenRunner(object):
             raise RuntimeError(
                 "Not all processes from previous run have completed"
             )
-        else:
-            self._waiter = threading.Thread(target=self._wait)  # ,daemon=True)
-            self._waiter.start()
 
         sp = self.spm
         # run agent commands in sequence
         for agent in self.agents:
+            cmd = agent.render()
+            log.debug("launching cmd '{}'".format(cmd))
             proc = sp.Popen(
                 shlex.split(agent.render()),
                 stdout=sp.PIPE,
@@ -55,21 +52,28 @@ class PopenRunner(object):
             # register for stdout hangup events
             self.poller.register(proc.stdout.fileno(), select.EPOLLHUP)
 
+        # launch waiter
+        self._waiter = threading.Thread(target=self._wait)  # ,daemon=True)
+        log.debug("starting waiter thread")
+        self._waiter.start()
+
         return self.get() if block else None
 
     def _wait(self):
         signalled = None
         left = len(self.agents)
         for _ in range(left):
-            # fd, status = self.poller.poll()  # wait on stdout hangup events
             pairs = self.poller.poll()  # wait on stdout hangup events
+            log.debug("pairs is '{}'\n".format(pairs))
             for fd, status in pairs:
                 proc = self.procs[fd]
                 # attach streams so they can be read more then once
-                proc.streams = Streams(*proc.communicate(timeout=2))
+                log.debug("collecting streams for {}".format(proc))
+                proc.streams = Streams(*proc.communicate())  # timeout=2))
                 if proc.returncode != 0 and not signalled:
                     # stop all other agents if there is a failure
                     signalled = self.stop()
+
         log.debug("terminating waiter thread")
 
     def get(self, timeout=180):
@@ -89,8 +93,10 @@ class PopenRunner(object):
                         raise RuntimeError("Unable to kill all agents!?")
 
                 # all procs were killed by SIGUSR1
-                raise TimeoutError("Agents '{}' failed to complete after '{}' seconds"
-                                   .format(signalled, timeout))
+                raise TimeoutError(
+                    "Agents '{}' failed to complete after '{}' seconds"
+                    .format(signalled, timeout)
+                )
         return self.agents.items()
 
     def stop(self):
@@ -107,8 +113,8 @@ class PopenRunner(object):
         signalled = OrderedDict()
         for agent, proc in self.iterprocs():
             proc.send_signal(signum)
-            log.debug("sent '{}' to agent '{}' with pid '{}'"
-                      .format(signal, agent, proc.pid))
+            log.debug("sent signal '{}' to agent '{}' with pid '{}'"
+                      .format(signum, agent, proc.pid))
             if proc.poll() is not None:
                 signalled[agent] = proc
         return signalled
