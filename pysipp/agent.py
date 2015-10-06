@@ -55,55 +55,15 @@ class UserAgent(object):
         self._cmd.proxy_port = self._proxy.port
 
 
-spec = [
-    # contact info
-    '{remote_host}:{remote_port}',
-    '-i {local_host}',
-    '-p {local_port}',
-    '-s {uri_username}',
-    '-rsa {proxy_addr}:{proxy_port}',
-    '-auth_uri {auth_uri}',
-    # sockets and protocols
-    '-bind_local {bind_local}',
-    '-mi {media_addr}',
-    '-mp {media_port}',
-    '-t {transport}',
-    # scenario config/ctl
-    '-sn {scen_name}',
-    '-sf {scen_file}',
-    '-recv_timeout {recv_timeout}',
-    '-d {pause_duration}',
-    '-default_behaviors {default_behaviors}',
-    '-3pcc {3pcc}',
-    # SIP vars
-    '-cid_str {cid_str}',
-    '-base_cseq {base_cseq}',
-    '-ap {auth_password}',
-    # load settings
-    '-r {rate}',
-    '-l {limit}',
-    '-m {call_count}',
-    '-rp {rate_period}',
-    # data insertion
-    '-key {key_vals}',
-    # files
-    '-error_file {error_file}',
-    '-calldebug_file {calldebug_file}',
-    '-message_file {message_file}',
-    '-log_file {log_file}',
-    '-inf {info_file}',
-    '-screen_file {screen_file}',
-    # bool flags
-    # '-rtp_echo',
-]
-
-
 def path2namext(filepath):
     name, ext = path.splitext(path.basename(filepath))
     return name
 
 
-def ua(spec=spec, **kwargs):
+def ua(**kwargs):
+    """Default user agent factory.
+    Returns a command string instance with sensible default arguments.
+    """
     defaults = {
         'recv_timeout': 5000,
         'call_count': 1,
@@ -113,7 +73,7 @@ def ua(spec=spec, **kwargs):
         defaults, kwargs))
     # override with user settings
     defaults.update(kwargs)
-    cmd = SippCmd(spec)
+    cmd = SippCmd()
 
     # apply attrs raising erros along the way
     for name, value in defaults.items():
