@@ -60,7 +60,7 @@ class DictField(object):
         )
 
 
-def CmdStr(program, spec):
+def CmdStr(spec):
     '''Build a command string from an iterable of format string tokens.
 
     Given a `spec` (i.e. an iterable of format string specifiers), this
@@ -92,8 +92,7 @@ def CmdStr(program, spec):
         template = tuple(spec)
         _params = OrderedDict()
 
-        def __init__(self, prog):
-            self.prog = prog
+        def __init__(self):
             self._init = True  # lock attribute creation
 
         def __str__(self):
@@ -107,7 +106,7 @@ def CmdStr(program, spec):
                 if value is not None:
                     tokens.append(descr.render(value))
 
-            return ''.join([self.prog, ' '] + tokens)
+            return ''.join(tokens)
 
         def __setattr__(self, key, value):
             # immutable after instantiation
@@ -130,11 +129,13 @@ def CmdStr(program, spec):
         Renderer._params[fieldname] = descr
         setattr(Renderer, fieldname, descr)
 
-    return Renderer(program)
+    return Renderer()
 
 
 sipp_spec = [
     # contact info
+    '{prefix} ',
+    '{bin_path} ',
     '{remote_host}',  # NOTE: no space
     ':{remote_port} ',
     '-i {local_host} ',
@@ -192,5 +193,6 @@ def SippCmd(spec=sipp_spec, fields=None):
 
     Given the provided `spec` create a cmd string renderer type.
     '''
-    sipp = spawn.find_executable('sipp')
-    return CmdStr(sipp, spec)
+    cmd = CmdStr(spec)
+    cmd.bin_path = spawn.find_executable('sipp')
+    return cmd

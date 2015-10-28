@@ -43,3 +43,10 @@ def test_dict_field():
     # clear all
     cmd.key_vals.clear()
     assert '-key' not in cmd.render()
+
+
+def test_prefix():
+    cmd = SippCmd()
+    pre = 'doggy bath'
+    cmd.prefix = pre
+    assert cmd.render()[:len(pre) + 1] == pre + ' '
