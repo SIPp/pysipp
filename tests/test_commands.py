@@ -16,6 +16,7 @@ def test_bool_field():
     assert '-rtp_echo' not in cmd.render()
     cmd.rtp_echo = True
     assert '-rtp_echo' in cmd.render()
+    assert type(cmd).rtp_echo is not cmd.rtp_echo
 
 
 def test_dict_field():

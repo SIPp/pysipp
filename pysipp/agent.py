@@ -2,8 +2,10 @@
 Wrappers for user agents which apply sensible cmdline arg defaults
 '''
 from os import path
+from distutils import spawn
+import functools
 from collections import namedtuple
-from .command import SippCmd
+from . import command
 import utils
 
 log = utils.get_logger()
@@ -25,37 +27,30 @@ ERRCODES = {
 }
 
 
-class UserAgent(object):
-    '''A wrapper around a SIPp command string
+class UserAgent(command.SippCmd):
+    '''An extension of a SIPp command string which provides
+    higher level attributes for assigning input arguments more similar
+    to configuration options for a SIP UA.
     '''
-    def __init__(self, cmd):
-        self._cmd = cmd
-        self._name = None
-        self._proxy = None
-
     @property
     def name(self):
         """Compute the name identifier for this agent based the scenario script
         or scenario name
         """
-        cmd = self._cmd
-        return cmd.scen_name or path2namext(cmd.scen_file)
-
-    def render(self):
-        return self._cmd.render()
+        return self.scen_name or path2namext(self.scen_file)
 
     @property
     def proxy(self):
-        return self._proxy
+        return SocketAddr(self.proxy_addr, self.proxy_port)
 
     @proxy.setter
     def proxy(self, pair):
-        self._proxy = SocketAddr(*pair)
-        self._cmd.proxy_addr = '[{}]'.format(self._proxy.ip)
-        self._cmd.proxy_port = self._proxy.port
+        self.proxy_addr, self.proxy_port = pair[0], pair[1]
 
 
 def path2namext(filepath):
+    if not filepath:
+        return None
     name, ext = path.splitext(path.basename(filepath))
     return name
 
@@ -65,21 +60,24 @@ def ua(**kwargs):
     Returns a command string instance with sensible default arguments.
     """
     defaults = {
+        'bin_path': spawn.find_executable('sipp'),
         'recv_timeout': 5000,
         'call_count': 1,
+        'rate': 1,
     }
+    # drop any built-in scen if a script file is provided
+    if 'scen_file' in kwargs:
+        kwargs.pop('scen_name')
 
     log.debug("defaults are {} extras are {}".format(
         defaults, kwargs))
-    # override with user settings
+    # override xith user settings
     defaults.update(kwargs)
-    cmd = SippCmd()
+    ua = UserAgent(defaults)
 
-    # apply attrs raising erros along the way
-    for name, value in defaults.items():
-        setattr(cmd, name, value)
+    # assign sensible defaults here...
+    return ua
 
-    return cmd
 
 
 def server(**kwargs):
@@ -88,10 +86,7 @@ def server(**kwargs):
     }
     # override with user settings
     defaults.update(kwargs)
-
-    cmd = ua(**defaults)
-
-    return cmd
+    return ua(**defaults)
 
 
 def client(remote_host, remote_port, **kwargs):
@@ -101,11 +96,8 @@ def client(remote_host, remote_port, **kwargs):
     # override with user settings
     defaults.update(kwargs)
     assert remote_host and remote_port
-
-    cmd = ua(
+    return ua(
         remote_host=remote_host,
         remote_port=remote_port,
         **defaults
     )
-
-    return cmd
