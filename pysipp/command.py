@@ -2,7 +2,6 @@
 Command string rendering
 '''
 import string
-from distutils import spawn
 from copy import copy
 from collections import OrderedDict
 import utils
@@ -15,84 +14,94 @@ def iter_format(item):
 
 
 class Field(object):
+    _default = None
+
     def __init__(self, name, fmtstr):
         self.name = name
         self.fmtstr = fmtstr
-        self.value = None
 
     def __get__(self, obj, cls):
-        return self.value
+        if obj is None:
+            return self
+        return obj._values.setdefault(
+            self.name, self._default() if self._default else None,
+        )
 
     def __set__(self, obj, value):
         self.render(value)  # value checking
-        self.value = value
+        obj._values[self.name] = value
 
-    def render(self, value=None):
+    def render(self, value):
         return self.fmtstr.format(**{self.name: value}) if value else ''
+
+
+class AddrField(Field):
+    def render(self, value):
+        return self.fmtstr.format(
+            **{self.name: '[{}]'.format(value)}) if value else ''
 
 
 class BoolField(Field):
     def __set__(self, obj, value):
         if not isinstance(value, bool):
             raise ValueError("{} must be a boolean type".format(self.name))
-        self.value = value
+        super(type(self), self).__set__(obj, value)
 
-    def render(self, value=None):
+    def render(self, value):
         return self.fmtstr.format(**{self.name: ''})
 
 
-class DictField(object):
-    def __init__(self, name, fmtstr):
-        self.name = name
-        self.fmtstr = fmtstr
-        self.d = OrderedDict()
-
-    def __get__(self, obj, cls):
-        return self.d
+class DictField(Field):
+    _default = OrderedDict
 
     def __set__(self, obj, value):
         raise AttributeError
 
-    def render(self, value=None):
+    def render(self, value):
         return ''.join(
             self.fmtstr.format(**{self.name: '{} {}'.format(key, val)})
-            for key, val in self.d.items()
+            for key, val in value.items()
         )
 
 
-def CmdStr(spec):
-    '''Build a command string from an iterable of format string tokens.
+def cmdstrtype(spec):
+    '''Build a command str renderer from an iterable of format string tokens.
 
     Given a `spec` (i.e. an iterable of format string specifiers), this
-    object wraps a command string and allows for `str.format` "replacement
-    fields" to be assigned using attribute access.
+    function returns a command string renderer type which allows for `str.format`
+    "replacement fields" to be assigned using attribute access.
 
     Ex.
-        >>> cmd = CmdStr('/usr/bin/sipp/, [
-            '{remote_host}',
-            ':{remote_port}',
+        >>> cmd = cmdstrtype([
+            '{bin_path} '
+            '{remote_host} ',
+            ':{remote_port} ',
             '-i {local_host} ',
             '-p {local_port} ',
             '-recv_timeout {msg_timeout} ',
             '-i {local_host} ',
-        ]
+        ])()
+        >>> cmd.bin_path = '/usr/bin/sipp/'
         >>> str(cmd)
         '/usr/bin/sipp'
-
+        >>> str(cmd) == cmd.render()
+        True
         >>> cmd.remote_host = 'doggy.com'
         >>> cmd.local_host = '192.168.0.1'
         >>> cmd.render()
         '/usr/bin/sipp doggy.com -i 192.168.0.1'
-
         >>> cmd.remote_port = 5060
-        >>> str(cmd)
+        >>> cmd.render()
         '/usr/bin/sipp doggy.com:5060 -i 192.168.0.1'
     '''
     class Renderer(object):
-        template = tuple(spec)
         _params = OrderedDict()
 
-        def __init__(self):
+        def __init__(self, defaults=None):
+            self._values = {}
+            if defaults:
+                for name, value in defaults.items():
+                    setattr(self, name, value)
             self._init = True  # lock attribute creation
 
         def __str__(self):
@@ -110,9 +119,13 @@ def CmdStr(spec):
 
         def __setattr__(self, key, value):
             # immutable after instantiation
-            if getattr(self, '_init', False) and\
-                    key not in self.__class__.__dict__:
-                raise AttributeError(key)
+            if getattr(
+                self, '_init', False
+            ) and (
+                key not in self.__class__.__dict__
+            ) and key not in self._params:
+                raise AttributeError(
+                    "no settable attribute '{}' was defined".format(key))
             object.__setattr__(self, key, value)
 
         def copy(self):
@@ -129,24 +142,24 @@ def CmdStr(spec):
         Renderer._params[fieldname] = descr
         setattr(Renderer, fieldname, descr)
 
-    return Renderer()
+    return Renderer
 
 
 sipp_spec = [
     # contact info
     '{prefix} ',
     '{bin_path} ',
-    '{remote_host}',  # NOTE: no space
+    ('{remote_host}', AddrField),  # NOTE: no space
     ':{remote_port} ',
-    '-i {local_host} ',
+    ('-i {local_host} ', AddrField),
     '-p {local_port} ',
     '-s {uri_username} ',
-    '-rsa {proxy_addr}',  # NOTE: no space
+    ('-rsa {proxy_addr}', AddrField),  # NOTE: no space
     ':{proxy_port} ',
     '-auth_uri {auth_uri} ',
     # sockets and protocols
     '-bind_local {bind_local} ',
-    '-mi {media_addr} ',
+    ('-mi {media_addr} ', AddrField),
     '-mp {media_port} ',
     '-t {transport} ',
     # scenario config/ctl
@@ -188,11 +201,5 @@ sipp_spec = [
 ]
 
 
-def SippCmd(spec=sipp_spec, fields=None):
-    '''A command string renderer for `sipp`.
-
-    Given the provided `spec` create a cmd string renderer type.
-    '''
-    cmd = CmdStr(spec)
-    cmd.bin_path = spawn.find_executable('sipp')
-    return cmd
+# a SIPp cmd renderer
+SippCmd = cmdstrtype(sipp_spec)
