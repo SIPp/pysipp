@@ -33,6 +33,7 @@ def test_agent_fails():
     # assert not uacproc.streams.stderr  # sometimes this has a log msg?
     assert uacproc.returncode == -10  # killed by SIGUSR1
 
+
 def test_default_scen():
     uas = server()
     uas.local_host, uas.local_port = '127.0.0.1', 5060
