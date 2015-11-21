@@ -14,6 +14,10 @@ log = utils.get_logger()
 Streams = namedtuple("Streams", "stdout stderr")
 
 
+class TimeoutError(Exception):
+    "SIPp process timeout exception"
+
+
 class PopenRunner(object):
     """Run a sequence of SIPp agents asynchronously. If any process terminates
     with a non-zero exit code, immediately kill all remaining processes and
@@ -21,9 +25,6 @@ class PopenRunner(object):
 
     Adheres to an interface similar to `multiprocessing.pool.AsyncResult`.
     """
-    class TimeoutError(Exception):
-        pass
-
     def __init__(self, agents, subprocmod=subprocess, poller=select.epoll()):
         self.agents = OrderedDict.fromkeys(agents)
         self.spm = subprocmod  # this could optionally be an rpyc proxy obj
@@ -57,7 +58,7 @@ class PopenRunner(object):
         log.debug("starting waiter thread")
         self._waiter.start()
 
-        return self.get() if block else None
+        return self.get(**kwargs) if block else None
 
     def _wait(self):
         signalled = None
@@ -97,7 +98,7 @@ class PopenRunner(object):
                     "Agents '{}' failed to complete after '{}' seconds"
                     .format(signalled, timeout)
                 )
-        return self.agents.items()
+        return self.agents
 
     def stop(self):
         '''Stop all agents with SIGUSR1 as per SIPp's signal handling

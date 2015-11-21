@@ -3,9 +3,8 @@ Wrappers for user agents which apply sensible cmdline arg defaults
 '''
 from os import path
 from distutils import spawn
-import functools
 from collections import namedtuple
-from . import command
+from . import command, launch
 import utils
 
 log = utils.get_logger()
@@ -32,6 +31,10 @@ class UserAgent(command.SippCmd):
     higher level attributes for assigning input arguments more similar
     to configuration options for a SIP UA.
     '''
+    logdir = utils.get_tmpdir()
+    runner_type = launch.PopenRunner
+    _runner = None
+
     @property
     def name(self):
         """Compute the name identifier for this agent based the scenario script
@@ -47,6 +50,15 @@ class UserAgent(command.SippCmd):
     def proxy(self, pair):
         self.proxy_addr, self.proxy_port = pair[0], pair[1]
 
+    @property
+    def runner(self):
+        if not getattr(self, '_runner', None):
+            self._runner = self.runner_type([self])
+        return self._runner
+
+    def run(self, **kwargs):
+        return self.runner(**kwargs)
+
 
 def path2namext(filepath):
     if not filepath:
@@ -55,7 +67,15 @@ def path2namext(filepath):
     return name
 
 
-def ua(**kwargs):
+def set_paths(ua, logdir):
+    name = ua.name
+    for key in 'error calldebug message log screen'.split():
+        filename = "{}_file".format(key)
+        setattr(ua, filename, path.join(
+                logdir, "{}_{}".format(name, filename)))
+
+
+def ua(logdir=None, **kwargs):
     """Default user agent factory.
     Returns a command string instance with sensible default arguments.
     """
@@ -75,9 +95,14 @@ def ua(**kwargs):
     defaults.update(kwargs)
     ua = UserAgent(defaults)
 
-    # assign sensible defaults here...
-    return ua
+    # call pre defaults hook
 
+    # apply defaults
+    # assign output file paths
+    set_paths(ua, logdir or ua.logdir)
+
+    # call post defaults hook
+    return ua
 
 
 def server(**kwargs):
