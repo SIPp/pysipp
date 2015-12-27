@@ -59,6 +59,12 @@ class UserAgent(command.SippCmd):
     def run(self, **kwargs):
         return self.runner(**kwargs)
 
+    def is_client(self):
+        return 'uac' in self.name.lower()
+
+    def is_server(self):
+        return 'uas' in self.name.lower()
+
 
 def path2namext(filepath):
     if not filepath:
