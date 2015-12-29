@@ -4,6 +4,7 @@ Load files from scenario directories
 import glob
 import os
 import utils
+import imp  # XXX py2.7
 log = utils.get_logger()
 
 
@@ -53,4 +54,8 @@ def iter_scen_dirs(rootdir, dir_filter=lambda dir_name: dir_name):
             log.warn(
                 "No xml scripts were found when searching for SIPp scenarios "
                 "under '{}'".format(path))
+
+        # load module sources
+        confpy = imp.load_source('pysipp_confpy', confpy) if confpy else None
+
         yield path, xmls, confpy
