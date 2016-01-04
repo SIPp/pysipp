@@ -3,8 +3,8 @@ Wrappers for user agents which apply sensible cmdline arg defaults
 '''
 from os import path
 from distutils import spawn
-from collections import namedtuple
-from . import command, launch
+from collections import namedtuple, OrderedDict
+from . import command, launch, plugin
 import utils
 
 log = utils.get_logger()
@@ -97,17 +97,20 @@ def ua(logdir=None, **kwargs):
 
     log.debug("defaults are {} extras are {}".format(
         defaults, kwargs))
-    # override xith user settings
+
+    # override with user settings
     defaults.update(kwargs)
     ua = UserAgent(defaults)
 
     # call pre defaults hook
+    plugin.mng.hook.pysipp_pre_ua_defaults(ua=ua)
 
     # apply defaults
-    # assign output file paths
-    set_paths(ua, logdir or ua.logdir)
+    set_paths(ua, logdir or ua.logdir)  # assign output file paths
 
     # call post defaults hook
+    plugin.mng.hook.pysipp_post_ua_defaults(ua=ua)
+
     return ua
 
 
@@ -132,3 +135,63 @@ def client(remote_host, remote_port, **kwargs):
         remote_port=remote_port,
         **defaults
     )
+
+
+class MultiSetter(OrderedDict):
+    """A OrderedDict which applies attr sets to all values
+    """
+    @classmethod
+    def from_iter(cls, itr):
+        inst = cls()
+        inst._init = True  # mark instantiation complete
+        # insert items by name
+        for item in itr:
+            inst[item.name] = item
+
+        return inst
+
+    def __setattr__(self, name, value):
+        # multi-setattr all items after init is complete
+        if hasattr(self, '_init'):
+            for agent in self.values():
+                setattr(agent, name, value)
+
+        # default impl
+        object.__setattr__(self, name, value)
+
+
+
+class Scenario(object):
+    """Wraps user agents as a collection for configuration,
+    routing, and launching by hooks. It is callable and can be optionally
+    be invoked asynchronously.
+    """
+    def __init__(self, agents, confpy=None):
+        self._agents = agents
+        self.agents = MultiSetter.from_iter(agents)
+        self.clients = MultiSetter.from_iter(a for a in agents if a.is_client())
+        self.servers = MultiSetter.from_iter(a for a in agents if a.is_server())
+        self.confpy = confpy
+
+    @property
+    def name(self):
+        """Attempt to extract a name from a combination of scenario directory
+        and script names
+        """
+        dirnames = []
+        for agent in self.agents.values():
+            if agent.scen_file:
+                dirnames.append(path.basename(path.dirname(agent.scen_file)))
+            else:
+                dirnames.append(agent.scen_name)
+
+        # concat dirnames if scripts come from separate dir locations
+        if len(set(dirnames)) > 1:
+            return '_'.join(dirnames)
+
+        return dirnames[0]
+
+    def __call__(self, block=True, timeout=180, runner=None, **kwargs):
+        return plugin.mng.hook.pysipp_run_protocol(
+            scen=self, block=block, timeout=timeout, runner=runner, **kwargs
+        )
