@@ -34,13 +34,8 @@ def test_agent_fails():
     assert uacproc.returncode == -10  # killed by SIGUSR1
 
 
-def test_default_scen():
-    uas = server()
-    uas.local_host, uas.local_port = '127.0.0.1', 5060
-    # client calls server
-    uac = client(uas.local_host, uas.local_port)
-
-    runner = run_blocking(uas, uac)
+def test_default_scen(default_agents):
+    runner = run_blocking(*default_agents)
 
     # both agents should be successful
     for ua, proc in runner.agents.items():

@@ -43,10 +43,10 @@ def test_client():
 
 
 def test_server():
-    uac = agent.server()
-    cmdstr = uac.render()
+    ua = agent.server()
+    cmdstr = ua.render()
     assert '-sn uas' in cmdstr
-    assert not (uac.remote_host and uac.remote_port)
+    assert not (ua.remote_host and ua.remote_port)
 
 
 @pytest.mark.parametrize('ua, retcode, kwargs, exc', [
@@ -77,3 +77,34 @@ def test_runner_fails(ua, retcode, kwargs, exc):
     assert len(agents) == 1
     proc = agents[ua]
     assert proc.returncode == retcode
+
+
+def test_scenario(default_agents):
+    uas, uac = default_agents
+    agents = list(default_agents)
+    scen = agent.Scenario(agents)
+
+    # verify agents
+    assert scen.agents.values() == agents
+    assert uas is scen.agents.values()[0]
+    assert uac is scen.agents.values()[1]
+    # verify servers
+    assert uas is scen.servers.values()[0]
+    # verify clients
+    assert uac is scen.clients.values()[0]
+
+    # ensure mult agent attr setting works
+    doggy = 'doggy'
+    scen.agents.local_host = doggy
+    assert uac.local_host == uas.local_host == doggy
+
+    # same error for any non-spec defined agent attr
+    with pytest.raises(AttributeError):
+        scen.agents.local_man = 'flasher'
+
+    # multi-setattr on servers only
+    scen.servers.remote_host = doggy
+    assert uas.remote_host == doggy
+    assert uac.remote_host != doggy
+
+    assert scen.name == 'uas_uac'
