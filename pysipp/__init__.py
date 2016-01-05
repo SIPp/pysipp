@@ -21,6 +21,7 @@ pysipp - a python wrapper for launching SIPp
 import sys
 from load import iter_scen_dirs
 from launch import PopenRunner
+import report
 
 
 class plugin(object):
@@ -30,7 +31,7 @@ class plugin(object):
     import hookspec
 
     hookimpl = pluggy.HookimplMarker('pysipp')
-    mng = pluggy.PluginManager('pysipp')
+    mng = pluggy.PluginManager('pysipp', implprefix='pysipp')
     mng.add_hookspecs(hookspec)
 
 
@@ -92,8 +93,9 @@ def walk(rootpath, logdir=None):
         # XXX patch pluggy to support direct method parsing allowing to remover
         # plugin.mng.hook.pysipp_conf_scen.call_extra(scen=scen)
 
-        # create and attach a default runner
-        scen.runner = plugin.mng.hook.pysipp_new_runner(scen=scen)
+        # create and attach a default runner for scenario and all agents
+        runner = plugin.mng.hook.pysipp_new_runner(scen=scen)
+        scen.runner = scen.agents._runner = runner
 
         if confpy:
             plugin.mng.unregister(confpy)
@@ -138,14 +140,25 @@ def pysipp_new_runner(scen):
 
 
 @plugin.hookimpl
-def pysipp_run_protocol(scen, runner, block, timeout):
+def pysipp_run_protocol(scen, runner, block, timeout, raise_exc):
     """"Invoked when a scenario object is called.
     """
     # use provided runner or default provided by hook
     runner = runner or scen.runner
     scen.runner = runner
     # run scenario
-    return runner(block=block, timeout=timeout)
+    agents2procs = runner(block=block, timeout=timeout)
+
+    # async run bundles up proc results for later processing
+    if not block:
+        return scen.runner
+
+    # sync run so report results immediately
+    report.emit_logfiles(agents2procs)
+    if raise_exc:
+        report.raise_on_nz(agents2procs)
+
+    return agents2procs
 
 
 # reg default hook set

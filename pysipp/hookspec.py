@@ -69,7 +69,7 @@ def pysipp_new_runner(scen):
 
 
 @hookspec(firstresult=True)
-def pysipp_run_protocol(scen, runner, block, timeout):
+def pysipp_run_protocol(scen, runner, block, timeout, raise_exc):
     """Perform steps to execute all SIPp commands usually by calling a
     preconfigured command launcher/runner.
     """
