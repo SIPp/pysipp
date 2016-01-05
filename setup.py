@@ -37,6 +37,7 @@ setup(
     url='https://github.com/tgoodlet/pysipp',
     platforms=['linux'],
     packages=['pysipp'],
+    install_requires=['pluggy==0.3.1'],
     extras_require={
         'testing': ['pytest'],
     },
