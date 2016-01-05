@@ -56,13 +56,25 @@ def test_sync_run(scenwalk):
     """Ensure all scenarios in the test run to completion in synchronous mode
     """
     for path, scen in scenwalk():
-        agents = scen()
+        agents = scen(raise_exc=False)
         for agent, proc in agents.items():
             if 'default_with_confpy' in scen.name:
                 assert proc.returncode != 0
             else:
                 assert proc.returncode == 0
 
+
+def test_basic(basic_scen):
+    assert len(basic_scen.agents) == 2
+    runner = basic_scen.runner
+    for agent in basic_scen.agents.values():
+        assert agent._runner is runner
+
+
+def test_unreachable_uas(basic_scen):
+    basic_scen.servers.proxy = ('127.0.0.1', 5070)
+    with pytest.raises(RuntimeError):
+        basic_scen()
 
 
 # def test_async_run(scenwalk):

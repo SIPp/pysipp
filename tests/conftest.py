@@ -5,7 +5,7 @@ import pytest
 import os
 import logging
 from pysipp.utils import LOG_FORMAT
-from pysipp import agent
+from pysipp import agent, scenario
 
 
 def pytest_configure(config):
@@ -28,3 +28,10 @@ def default_agents():
     uas = agent.server(local_host='127.0.0.1', local_port=5060)
     uac = agent.client(uas.local_host, uas.local_port)
     return uas, uac
+
+
+@pytest.fixture
+def basic_scen():
+    """The most basic scenario instance
+    """
+    return scenario()

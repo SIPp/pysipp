@@ -15,7 +15,7 @@ def test_ua(ua):
     sock = ('10.10.9.9', 5060)
     ua.proxy = sock
     assert ua.name is None
-    assert '[{}]:{}'.format(*sock) in ua.render()
+    assert "'[{}]':{}".format(*sock) in ua.render()
 
 
 def test_logdir(ua):
@@ -32,7 +32,7 @@ def test_client():
     uac = agent.client(*remote_sock)
     cmdstr = uac.render()
     assert '-sn uac' in cmdstr
-    assert '[{}]:{}'.format(*remote_sock) in cmdstr
+    assert "'[{}]':{}".format(*remote_sock) in cmdstr
 
     # pretend script file
     script = '/home/sipp_scen/uac.xml'
