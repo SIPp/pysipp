@@ -38,7 +38,7 @@ class Field(object):
 class AddrField(Field):
     def render(self, value):
         return self.fmtstr.format(
-            **{self.name: '[{}]'.format(value)}) if value else ''
+            **{self.name: "'[{}]'".format(value)}) if value else ''
 
 
 class BoolField(Field):
@@ -192,10 +192,10 @@ sipp_spec = [
     ('-rtp_echo {rtp_echo}', BoolField),
     ('-timeout_error {timeout_error}', BoolField),
     ('-aa {auto_answer}', BoolField),
-    ('-trace_err {trace_err}', BoolField),
+    ('-trace_err {trace_error}', BoolField),
     ('-trace_calldebug {trace_calldebug}', BoolField),
-    ('-trace_msg {trace_msg}', BoolField),
-    ('-trace_logs {trace_logs}', BoolField),
+    ('-trace_msg {trace_message}', BoolField),
+    ('-trace_logs {trace_log}', BoolField),
     ('-trace_screen {trace_screen}', BoolField),
     ('-error_overwrite {error_overwrite}', BoolField),
 ]

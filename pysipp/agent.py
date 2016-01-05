@@ -4,6 +4,7 @@ Wrappers for user agents which apply sensible cmdline arg defaults
 from os import path
 from distutils import spawn
 from collections import namedtuple, OrderedDict
+from copy import copy
 from . import command, launch, plugin
 import utils
 
@@ -12,28 +13,15 @@ log = utils.get_logger()
 SocketAddr = namedtuple('SocketAddr', 'ip port')
 
 
-ERRCODES = {
-    # 0: "All calls were successful"
-    1: "At least one call failed",
-    15: "Process was terminated",
-    97: "Exit on internal command. Calls may have been processed",
-    99: "Normal exit without calls processed",
-    -1: "Fatal error",
-    -2: "Fatal error binding a socket",
-    -10: "Signalled to stop with SIGUSR1",
-    254: "Connection Error: socket already in use",
-    255: "Command or syntax error: check stderr output",
-}
-
-
 class UserAgent(command.SippCmd):
-    '''An extension of a SIPp command string which provides
-    higher level attributes for assigning input arguments more similar
-    to configuration options for a SIP UA.
-    '''
-    logdir = utils.get_tmpdir()
+    """An extension of a SIPp command string which provides more pythonic
+    higher level attributes for assigning input arguments similar to
+    configuration options for a SIP UA.
+    """
+    logdir = None
     runner_type = launch.PopenRunner
     _runner = None
+    _log_kws = 'screen error calldebug message log'.split()
 
     @property
     def name(self):
@@ -43,7 +31,20 @@ class UserAgent(command.SippCmd):
         return self.scen_name or path2namext(self.scen_file)
 
     @property
+    def sockaddr(self):
+        """Local socket info as a tuple
+        """
+        return SocketAddr(self.local_host, self.local_port)
+
+    @sockaddr.setter
+    def sockaddr(self):
+        self.local_host, self.local_port = pair[0], pair[1]
+
+    @property
     def proxy(self):
+        """A tuple holding the (addr, port) socket pair which will be set as
+        the `-rsa addr:port` flag to underlying SIPp UACs.
+        """
         return SocketAddr(self.proxy_addr, self.proxy_port)
 
     @proxy.setter
@@ -65,6 +66,30 @@ class UserAgent(command.SippCmd):
     def is_server(self):
         return 'uas' in self.name.lower()
 
+    def iter_logfile_items(self):
+        for name in self._log_kws:
+            attr_name = name + '_file'
+            yield attr_name, getattr(self, attr_name)
+
+    def enable_tracing(self):
+        kws = copy(self._log_kws)
+        kws.remove('error')  # everything except logging stderr to a file
+        for name in kws:
+            attr_name = 'trace_' + name
+            setattr(self, attr_name, True)
+
+    @property
+    def streams(self):
+        """Standard streams strings packaged in a tuple
+        """
+        return self.runner.agents[self].streams
+
+    @property
+    def cmd(self):
+        """Rendered SIPp command string
+        """
+        return self.render()
+
 
 def path2namext(filepath):
     if not filepath:
@@ -73,12 +98,14 @@ def path2namext(filepath):
     return name
 
 
-def set_paths(ua, logdir):
+def enable_logging(ua, logdir):
     name = ua.name
-    for key in 'error calldebug message log screen'.split():
-        filename = "{}_file".format(key)
-        setattr(ua, filename, path.join(
-                logdir, "{}_{}".format(name, filename)))
+    for name, attr in ua.iter_logfile_items():
+        # set all log files
+        setattr(ua, name, path.join(logdir, name))
+
+    # enable all corresponding trace flag args
+    ua.enable_tracing()
 
 
 def ua(logdir=None, **kwargs):
@@ -106,7 +133,8 @@ def ua(logdir=None, **kwargs):
     plugin.mng.hook.pysipp_pre_ua_defaults(ua=ua)
 
     # apply defaults
-    set_paths(ua, logdir or ua.logdir)  # assign output file paths
+    ua.logdir = logdir or utils.get_tmpdir()
+    enable_logging(ua, ua.logdir)  # assign output file paths
 
     # call post defaults hook
     plugin.mng.hook.pysipp_post_ua_defaults(ua=ua)
@@ -160,7 +188,6 @@ class MultiSetter(OrderedDict):
         object.__setattr__(self, name, value)
 
 
-
 class Scenario(object):
     """Wraps user agents as a collection for configuration,
     routing, and launching by hooks. It is callable and can be optionally
@@ -169,8 +196,10 @@ class Scenario(object):
     def __init__(self, agents, confpy=None):
         self._agents = agents
         self.agents = MultiSetter.from_iter(agents)
-        self.clients = MultiSetter.from_iter(a for a in agents if a.is_client())
-        self.servers = MultiSetter.from_iter(a for a in agents if a.is_server())
+        self.clients = MultiSetter.from_iter(
+            a for a in agents if a.is_client())
+        self.servers = MultiSetter.from_iter(
+            a for a in agents if a.is_server())
         self.confpy = confpy
 
     @property
@@ -191,7 +220,9 @@ class Scenario(object):
 
         return dirnames[0]
 
-    def __call__(self, block=True, timeout=180, runner=None, **kwargs):
+    def __call__(self, block=True, timeout=180, runner=None, raise_exc=True,
+                 **kwargs):
         return plugin.mng.hook.pysipp_run_protocol(
-            scen=self, block=block, timeout=timeout, runner=runner, **kwargs
+            scen=self, block=block, timeout=timeout, runner=runner,
+            raise_exc=raise_exc, **kwargs
         )
