@@ -9,10 +9,14 @@ DATE_FORMAT = '%b %d %H:%M:%S'
 
 
 def get_logger():
+    """Get the project logger instance
+    """
     return logging.getLogger('pysipp')
 
 
 def get_tmpdir():
+    """Return a random temp dir
+    """
     return tempfile.mkdtemp(prefix='pysipp_')
 
 

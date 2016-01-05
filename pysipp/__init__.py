@@ -94,13 +94,36 @@ def walk(rootpath, logdir=None):
         # plugin.mng.hook.pysipp_conf_scen.call_extra(scen=scen)
 
         # create and attach a default runner for scenario and all agents
-        runner = plugin.mng.hook.pysipp_new_runner(scen=scen)
-        scen.runner = scen.agents._runner = runner
+        plugin.mng.hook.pysipp_new_runner(scen=scen)
 
         if confpy:
             plugin.mng.unregister(confpy)
 
         yield path, scen
+
+
+def scenario(scendir=None, logdir=None, proxy=None):
+    """Return a single Scenario loaded from `scendir` if provided else the
+    basic default call flow.
+    """
+    if scendir:
+        # deliver single scenario from dir
+        path, scen = next(walk(scendir))
+    else:
+        # deliver the default scenario bound to loopback sockets
+        uas = agent.server(
+            local_host='127.0.0.1', local_port=5060, logdir=logdir)
+        uac = agent.client(uas.local_host, uas.local_port, logdir=uas.logdir)
+
+        # same as above
+        hooks = plugin.mng.hook
+        scen = hooks.pysipp_new_scen(agents=[uas, uac], confpy=None)
+        plugin.mng.hook.pysipp_new_runner(scen=scen)
+
+        if proxy:
+            scen.clients.proxy = proxy
+
+    return scen
 
 
 # Default hook implementations
@@ -134,9 +157,11 @@ def pysipp_conf_scen(scen):
 
 @plugin.hookimpl
 def pysipp_new_runner(scen):
-    """Provision a default cmd runner
+    """Provision and assign a default cmd runner
     """
-    return PopenRunner(scen.agents.values())
+    runner = PopenRunner(scen.agents.values())
+    scen.runner = scen.agents._runner = runner
+    return runner
 
 
 @plugin.hookimpl

@@ -43,7 +43,7 @@ class PopenRunner(object):
         # run agent commands in sequence
         for agent in self.agents:
             cmd = agent.render()
-            log.debug("launching cmd '{}'".format(cmd))
+            log.debug("launching agent '{}' cmd \"{}\"".format(agent.name, cmd))
             proc = sp.Popen(
                 shlex.split(agent.render()),
                 stdout=sp.PIPE,
