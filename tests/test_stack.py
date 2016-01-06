@@ -4,6 +4,7 @@ End to end tests with plugin support
 import pytest
 import pysipp
 import functools
+import os
 
 
 @pytest.fixture
@@ -65,6 +66,8 @@ def test_sync_run(scenwalk):
 
 
 def test_basic(basic_scen):
+    """Test the most basic uac <-> uas call flow
+    """
     assert len(basic_scen.agents) == 2
     runner = basic_scen.runner
     for agent in basic_scen.agents.values():
@@ -72,9 +75,20 @@ def test_basic(basic_scen):
 
 
 def test_unreachable_uas(basic_scen):
+    """Test the basic scenario but have the uas bind to a different port thus
+    causing the uac to timeout on request responses. Ensure that an error is
+    raised and that the appropriate log files are generated per agent.
+    """
     basic_scen.servers.proxy = ('127.0.0.1', 5070)
     with pytest.raises(RuntimeError):
         basic_scen()
+
+    # verify log file generation for each agent
+    uas = basic_scen.agents['uas']
+    logdir = uas.logdir
+    numagents = len(basic_scen.agents)
+    numlogs = len(list(uas.iter_logfile_items()))
+    assert numagents * 3 <= len(os.listdir(logdir)) <= numagents * numlogs
 
 
 # def test_async_run(scenwalk):

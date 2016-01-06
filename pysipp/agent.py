@@ -4,7 +4,6 @@ Wrappers for user agents which apply sensible cmdline arg defaults
 from os import path
 from distutils import spawn
 from collections import namedtuple, OrderedDict
-from copy import copy
 from . import command, launch, plugin
 import utils
 
@@ -21,7 +20,8 @@ class UserAgent(command.SippCmd):
     logdir = None
     runner_type = launch.PopenRunner
     _runner = None
-    _log_kws = 'screen error calldebug message log'.split()
+    # we skip `error` since we can get it from stderr
+    _log_types = 'screen calldebug message log'.split()
 
     @property
     def name(self):
@@ -37,7 +37,7 @@ class UserAgent(command.SippCmd):
         return SocketAddr(self.local_host, self.local_port)
 
     @sockaddr.setter
-    def sockaddr(self):
+    def sockaddr(self, pair):
         self.local_host, self.local_port = pair[0], pair[1]
 
     @property
@@ -67,14 +67,12 @@ class UserAgent(command.SippCmd):
         return 'uas' in self.name.lower()
 
     def iter_logfile_items(self):
-        for name in self._log_kws:
+        for name in self._log_types:
             attr_name = name + '_file'
             yield attr_name, getattr(self, attr_name)
 
     def enable_tracing(self):
-        kws = copy(self._log_kws)
-        kws.remove('error')  # everything except logging stderr to a file
-        for name in kws:
+        for name in self._log_types:
             attr_name = 'trace_' + name
             setattr(self, attr_name, True)
 
@@ -99,10 +97,9 @@ def path2namext(filepath):
 
 
 def enable_logging(ua, logdir):
-    name = ua.name
     for name, attr in ua.iter_logfile_items():
         # set all log files
-        setattr(ua, name, path.join(logdir, name))
+        setattr(ua, name, path.join(logdir, "{}_{}".format(ua.name, name)))
 
     # enable all corresponding trace flag args
     ua.enable_tracing()

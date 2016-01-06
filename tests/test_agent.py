@@ -23,7 +23,7 @@ def test_logdir(ua):
     assert logdir
     cmd = ua.render()
     logs = [token for token in cmd.split() if logdir in token]
-    assert len(logs) == 5  # currently default num of logs
+    assert len(logs) == len(ua._log_types)  # currently default num of logs
 
 
 def test_client():
