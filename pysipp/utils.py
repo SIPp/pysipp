@@ -3,8 +3,10 @@ import imp  # XXX py2.7
 import tempfile
 import os
 
-LOG_FORMAT = ("%(asctime)s [%(levelname)s] %(name)s %(filename)s:%(lineno)d "
-              ": %(message)s")
+LOG_FORMAT = (
+    "%(asctime)s %(threadName)s [%(levelname)s] %(name)s "
+    "%(filename)s:%(lineno)d : %(message)s")
+
 DATE_FORMAT = '%b %d %H:%M:%S'
 
 
@@ -12,6 +14,12 @@ def get_logger():
     """Get the project logger instance
     """
     return logging.getLogger('pysipp')
+
+
+def log_to_stderr(**kwargs):
+    defaults = {'format': LOG_FORMAT}
+    defaults.update(kwargs)
+    logging.basicConfig(**defaults)
 
 
 def get_tmpdir():
@@ -25,4 +33,4 @@ def load_mod(path, name=None):
     """
     name = name or os.path.splitext(os.path.basename(path))[0]
     # load module sources
-    return imp.load_source('pysipp_confpy', path)
+    return imp.load_source(name, path)
