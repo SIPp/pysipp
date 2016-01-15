@@ -9,7 +9,7 @@ import utils
 log = utils.get_logger()
 
 ERRCODES = {
-    # 0: "All calls were successful"
+    0: "All calls were successful",
     1: "At least one call failed",
     15: "Process was terminated",
     97: "Exit on internal command. Calls may have been processed",
@@ -48,6 +48,9 @@ def emit_logfiles(agents2procs, level='warn', max_lines=50):
 
         # print stderr
         emit("stderr for '{}'\n{}\n".format(ua.name, proc.streams.stderr))
+        # FIXME: no idea, but some logs are not being printed without this
+        # logging mod bug?
+        time.sleep(0.01)
 
         # print log file contents
         for name, fpath in ua.iter_logfile_items():
@@ -66,5 +69,7 @@ def emit_logfiles(agents2procs, level='warn', max_lines=50):
                     else:
                         output = ''.join(lines)
                     # log it
-                    emit("'{}' contents for {} @ socket {}:\n{}".format(
+                    emit("'{}' contents for '{}' @ {}:\n{}".format(
                         name, ua.name, ua.sockaddr, output))
+                    # FIXME: same as above
+                    time.sleep(0.01)
