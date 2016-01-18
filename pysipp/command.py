@@ -32,7 +32,8 @@ class Field(object):
         obj._values[self.name] = value
 
     def render(self, value):
-        return self.fmtstr.format(**{self.name: value}) if value else ''
+        return self.fmtstr.format(
+            **{self.name: "'{}'".format(value)}) if value else ''
 
 
 class AddrField(Field):
@@ -54,12 +55,9 @@ class BoolField(Field):
 class DictField(Field):
     _default = OrderedDict
 
-    def __set__(self, obj, value):
-        raise AttributeError
-
     def render(self, value):
         return ''.join(
-            self.fmtstr.format(**{self.name: '{} {}'.format(key, val)})
+            self.fmtstr.format(**{self.name: "{} '{}'".format(key, val)})
             for key, val in value.items()
         )
 
@@ -68,8 +66,8 @@ def cmdstrtype(spec):
     '''Build a command str renderer from an iterable of format string tokens.
 
     Given a `spec` (i.e. an iterable of format string specifiers), this
-    function returns a command string renderer type which allows for `str.format`
-    "replacement fields" to be assigned using attribute access.
+    function returns a command string renderer type which allows for
+    `str.format` "replacement fields" to be assigned using attribute access.
 
     Ex.
         >>> cmd = cmdstrtype([
@@ -123,9 +121,11 @@ def cmdstrtype(spec):
                 self, '_init', False
             ) and (
                 key not in self.__class__.__dict__
-            ) and key not in self._params:
+            ) and (
+                key not in self._params
+            ) and key[0] is not '_':
                 raise AttributeError(
-                    "no settable attribute '{}' was defined".format(key))
+                    "no settable public attribute '{}' defined".format(key))
             object.__setattr__(self, key, value)
 
         def copy(self):
@@ -166,9 +166,10 @@ sipp_spec = [
     '-sn {scen_name} ',
     '-sf {scen_file} ',
     '-recv_timeout {recv_timeout} ',
+    '-timeout {timeout} ',
     '-d {pause_duration} ',
     '-default_behaviors {default_behaviors} ',
-    '-3pcc {3pcc} ',
+    '-3pcc {sock3pcc} ',
     # SIP vars
     '-cid_str {cid_str} ',
     '-base_cseq {base_cseq} ',
