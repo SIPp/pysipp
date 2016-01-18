@@ -35,7 +35,15 @@ def pysipp_load_scendir(path, xmls, confpy):
 
 
 @hookspec(firstresult=True)
-def pysipp_order_agents(agentsdict, clientsdict, serversdict):
+def pysipp_conf_scen_protocol(agents, confpy):
+    """Performs scenario configuration by making multiple hook calls with
+    surrounding logic for determining the sub-registration of of pysipp_conf.py
+    modules. A scenario object must be returned.
+    """
+
+
+@hookspec(firstresult=True)
+def pysipp_order_agents(agents, clients, servers):
     """Return ua iterator which delivers agents in launch order
     """
 
