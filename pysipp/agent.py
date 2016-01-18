@@ -2,9 +2,11 @@
 Wrappers for user agents which apply sensible cmdline arg defaults
 '''
 from os import path
+import re
 from distutils import spawn
+from copy import copy
 from collections import namedtuple, OrderedDict
-from . import command, launch, plugin
+from . import command, plugin
 import utils
 
 log = utils.get_logger()
@@ -17,9 +19,6 @@ class UserAgent(command.SippCmd):
     higher level attributes for assigning input arguments similar to
     configuration options for a SIP UA.
     """
-    logdir = None
-    runner_type = launch.PopenRunner
-    _runner = None
     # we skip `error` since we can get it from stderr
     _log_types = 'screen calldebug message log'.split()
 
@@ -28,7 +27,7 @@ class UserAgent(command.SippCmd):
         """Compute the name identifier for this agent based the scenario script
         or scenario name
         """
-        return self.scen_name or path2namext(self.scen_file)
+        return self.scen_name or path2namext(self.scen_file) or str(None)
 
     @property
     def sockaddr(self):
@@ -38,7 +37,27 @@ class UserAgent(command.SippCmd):
 
     @sockaddr.setter
     def sockaddr(self, pair):
-        self.local_host, self.local_port = pair[0], pair[1]
+        self.local_host, self.local_port = pair
+
+    @property
+    def remotesockaddr(self):
+        """Local socket info as a tuple
+        """
+        return SocketAddr(self.remote_host, self.remote_port)
+
+    @remotesockaddr.setter
+    def remotesockaddr(self, pair):
+        self.remote_host, self.remote_port = pair
+
+    @property
+    def mediasockaddr(self):
+        """Local socket info as a tuple
+        """
+        return SocketAddr(self.media_addr, self.media_port)
+
+    @mediasockaddr.setter
+    def mediasockaddr(self, pair):
+        self.media_addr, self.media_port = pair
 
     @property
     def proxy(self):
@@ -49,16 +68,39 @@ class UserAgent(command.SippCmd):
 
     @proxy.setter
     def proxy(self, pair):
-        self.proxy_addr, self.proxy_port = pair[0], pair[1]
+        if pair is None:
+            self.proxy_addr = self.proxy_port = None
+
+        self.proxy_addr, self.proxy_port = pair
 
     @property
-    def runner(self):
-        if not getattr(self, '_runner', None):
-            self._runner = self.runner_type([self])
-        return self._runner
+    def call_load(self, tup):
+        """Shorthand attr for accessing load settings
+        """
+        return self.rate, self.limit, self.call_count
+
+    @call_load.setter
+    def call_load(self, tup):
+        self.rate, self.limit, self.call_count = tup
 
     def run(self, **kwargs):
-        return self.runner(**kwargs)
+        return self(**kwargs)
+
+    def __call__(self, block=True, timeout=180, runner=None, raise_exc=True,
+                 **kwargs):
+        # create and configure a temp scenario
+        scen = plugin.mng.hook.pysipp_conf_scen_protocol(
+            agents=[self], confpy=None
+        )
+        # attach the used runner for post-portem in case the below
+        # call raises
+        self._runner = scen.runner
+        # run the standard protocol
+        return plugin.mng.hook.pysipp_run_protocol(
+            scen=scen, block=block, timeout=timeout,
+            runner=runner,
+            raise_exc=raise_exc, **kwargs
+        )
 
     def is_client(self):
         return 'uac' in self.name.lower()
@@ -88,21 +130,39 @@ class UserAgent(command.SippCmd):
         """
         return self.render()
 
+    @property
+    def logdir(self):
+        return self._logdir
+
+    @logdir.setter
+    def logdir(self, dirpath):
+        assert path.isdir(dirpath)
+        for name, attr in self.iter_logfile_items():
+            # set all log files
+            setattr(self, name,
+                    path.join(dirpath, "{}_{}".format(self.name, name)))
+
+        # enable all corresponding trace flag args
+        self.enable_tracing()
+        self._logdir = dirpath
+
+    @property
+    def plays_media(self, patt='play_pcap_audio'):
+        """Bool determining whether script plays media
+        """
+        # FIXME: should be able to parse using -sd
+        if not self.scen_file:
+            return False
+
+        with open(self.scen_file, 'r') as sf:
+            return bool(re.match(patt, sf.read()))
+
 
 def path2namext(filepath):
     if not filepath:
         return None
     name, ext = path.splitext(path.basename(filepath))
     return name
-
-
-def enable_logging(ua, logdir):
-    for name, attr in ua.iter_logfile_items():
-        # set all log files
-        setattr(ua, name, path.join(logdir, "{}_{}".format(ua.name, name)))
-
-    # enable all corresponding trace flag args
-    ua.enable_tracing()
 
 
 def ua(logdir=None, **kwargs):
@@ -130,8 +190,8 @@ def ua(logdir=None, **kwargs):
     plugin.mng.hook.pysipp_pre_ua_defaults(ua=ua)
 
     # apply defaults
+    # assign output file paths
     ua.logdir = logdir or utils.get_tmpdir()
-    enable_logging(ua, ua.logdir)  # assign output file paths
 
     # call post defaults hook
     plugin.mng.hook.pysipp_post_ua_defaults(ua=ua)
@@ -140,6 +200,9 @@ def ua(logdir=None, **kwargs):
 
 
 def server(**kwargs):
+    """A SIPp user agent server
+    (i.e. recieves a SIP message as it's first action)
+    """
     defaults = {
         'scen_name': 'uas',
     }
@@ -149,6 +212,9 @@ def server(**kwargs):
 
 
 def client(remote_host, remote_port, **kwargs):
+    """A SIPp user agent client
+    (i.e. sends a SIP message as it's first action)
+    """
     defaults = {
         'scen_name': 'uac',
     }
@@ -162,7 +228,7 @@ def client(remote_host, remote_port, **kwargs):
     )
 
 
-class MultiSetter(OrderedDict):
+class MultiAccess(OrderedDict):
     """A OrderedDict which applies attr sets to all values
     """
     @classmethod
@@ -176,13 +242,36 @@ class MultiSetter(OrderedDict):
         return inst
 
     def __setattr__(self, name, value):
-        # multi-setattr all items after init is complete
-        if hasattr(self, '_init'):
-            for agent in self.values():
-                setattr(agent, name, value)
-
         # default impl
-        object.__setattr__(self, name, value)
+        if not hasattr(self, '_init'):
+            object.__setattr__(self, name, value)
+            return
+
+        # multi-setattr all items with a copy after init is complete
+        for agent in self.values():
+            setattr(agent, name, copy(value))
+
+    def __getattr__(self, key):
+        if not hasattr(self, '_init'):
+            return object.__getattribute__(self, key)
+        try:
+            return object.__getattribute__(self, key)
+        except AttributeError:
+            vals = self.values()
+            if vals and key not in dir(vals[0]):
+                raise
+            res = OrderedDict()
+            for name, ua in self.items():
+                val = getattr(ua, key, None)
+                if val:
+                    res[name] = val
+            return res
+
+    def multiupdate(self, attr, item):
+        """Update all values.attrs with the provided item
+        """
+        for val in self.values():
+            getattr(val, attr).update(item)
 
 
 class Scenario(object):
@@ -191,13 +280,23 @@ class Scenario(object):
     be invoked asynchronously.
     """
     def __init__(self, agents, confpy=None):
-        self._agents = agents
-        self.agents = MultiSetter.from_iter(agents)
-        self.clients = MultiSetter.from_iter(
+        self._agents = agents  # original iterable
+        self.agents = MultiAccess.from_iter(agents)
+        self.clients = MultiAccess.from_iter(
             a for a in agents if a.is_client())
-        self.servers = MultiSetter.from_iter(
+        self.servers = MultiAccess.from_iter(
             a for a in agents if a.is_server())
-        self.confpy = confpy
+        self.mod = confpy
+
+    @property
+    def proxy(self):
+        """Proxy socket for the first client in this scenario
+        """
+        return self.clients.values()[0].proxy
+
+    @proxy.setter
+    def proxy(self, value):
+        self.clients.values()[0].proxy = value
 
     @property
     def name(self):
@@ -216,6 +315,43 @@ class Scenario(object):
             return '_'.join(dirnames)
 
         return dirnames[0]
+
+    def socket2agent(self, socket, bytype=''):
+        """Lookup an agent by socket. `bytype` is a keyword which determines
+        which socket to use at the key and can be one of {'media', 'remote'}
+        """
+        for agent in self.agents.values():
+            val = getattr(agent, "{}sockaddr".format(bytype), False)
+            if val:
+                return agent
+
+    @property
+    def has_media(self):
+        """Bool dermining whether this scen is a media player
+        """
+        if any(agent.plays_media for agent in self.agents.values()):
+            return True
+        return False
+
+    @property
+    def dirpath(self):
+        """Scenario directory path in the file system where all xml scripts
+        and pysipp_conf.py should reside.
+        """
+        scenfile = self.agents.values()[0].scen_file
+        return path.dirname(scenfile) if scenfile else None
+
+    def cmditems(self):
+        """Map of agent names to cmd strings
+        """
+        return [(name, agent.cmd) for name, agent in self.agents.iteritems()]
+
+    def pformat_cmds(self):
+        """Pretty format string for printing agent commands
+        """
+        return '\n\n'.join(
+            ["{}:\n{}".format(name, cmd) for name, cmd in self.cmditems()]
+        )
 
     def __call__(self, block=True, timeout=180, runner=None, raise_exc=True,
                  **kwargs):
