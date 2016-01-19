@@ -9,19 +9,43 @@ scenarios from Python thus avoiding nightmarish shell command concoctions.
 
 
 ## Quick start
+Launching the default uac scenario is a short line:
+
+```python
+import pysipp
+pysipp.client('10.10.8.88', 5060)()
+```
+
+Manually running the default uac <-> uas scenario is simple as well:
+
+```python
+uas = pysipp.server(sockaddr=('10.10.8.88', 5060))
+uac = pysipp.client(*uas.sockaddr)
+uas(block=False)
+uac()
+```
+
+For more complex multi-UA orchestrations we can use
+a `pysipp.scenario`. The scenario above is the default:
+
+```python
+scen = pysipp.scenario()
+scen()
+```
+
 Say you have a couple SIPp xml scrips and a device you're looking to
 test using them (eg. a B2BUA or SIP proxy). Assuming you've organized
 the scripts nicely in a directory like so:
 
 ```
-  test_scenario/
-    cancel_before_answer_uac.xml
-    uas.xml
+test_scenario/
+  uac.xml
+  referer_uas.xml
+  referee_uas.xml
 ```
 and your DUT is listening on socket `10.10.8.1:5060`
 
 ```python
-import pysipp
 scen = pysipp.scenario(scendir='path/to/test_scenario/',
     proxy=('10.10.8.1', 5060)
 )
