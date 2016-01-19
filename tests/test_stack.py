@@ -43,7 +43,7 @@ def test_confpy_hooks(scendir):
     Assertions here are based on predefined hooks
     """
     path, scen = list(pysipp.walk(scendir + '/default_with_confpy'))[0]
-    assert scen.confpy
+    assert scen.mod
     # ordering hook should reversed agents
     agents = scen.agents.values()
     assert agents[0].is_client()
@@ -57,8 +57,8 @@ def test_sync_run(scenwalk):
     """Ensure all scenarios in the test run to completion in synchronous mode
     """
     for path, scen in scenwalk():
-        agents = scen(raise_exc=False)
-        for agent, proc in agents.items():
+        runner = scen(raise_exc=False, timeout=5)
+        for agent, proc in runner.agents.items():
             if 'default_with_confpy' in scen.name:
                 assert proc.returncode != 0
             else:
@@ -70,8 +70,10 @@ def test_basic(basic_scen):
     """
     assert len(basic_scen.agents) == 2
     runner = basic_scen.runner
-    for agent in basic_scen.agents.values():
-        assert agent._runner is runner
+    # ensure sync run works
+    r = basic_scen()
+    assert r == runner
+    assert not r.is_alive()
 
 
 def test_unreachable_uas(basic_scen):

@@ -31,7 +31,9 @@ def test_agent_fails():
     # killed by signal
     uacproc = runner.agents[uac]
     # assert not uacproc.streams.stderr  # sometimes this has a log msg?
-    assert uacproc.returncode == -10  # killed by SIGUSR1
+    ret = uacproc.returncode
+    # killed by SIGUSR1 or terminates before it starts (racy)
+    assert ret == -10 or ret == 0
 
 
 def test_default_scen(default_agents):

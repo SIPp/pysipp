@@ -25,21 +25,30 @@ def test_dict_field():
 
     # one entry
     cmd.key_vals['doggy'] = 100
-    assert '-key doggy 100' in cmd.render()
+    assert "-key doggy '100'" in cmd.render()
 
     # two entries
     cmd.key_vals['kitty'] = 200
-    assert '-key kitty 200' in cmd.render()
-    assert '-key kitty 200' in cmd.render() and\
-        '-key doggy 100' in cmd.render()
+    assert "-key kitty '200'" in cmd.render()
+    assert "-key kitty '200'" in cmd.render() and\
+        "-key doggy '100'" in cmd.render()
 
     # three entries
     cmd.key_vals['mousey'] = 300
-    assert '-key kitty 200' in cmd.render() and\
-        '-key doggy 100' in cmd.render() and\
-        '-key mousey 300' in cmd.render()
+    assert "-key kitty '200'" in cmd.render() and\
+        "-key doggy '100'" in cmd.render() and\
+        "-key mousey '300'" in cmd.render()
 
     log.debug("cmd is '{}'".format(cmd.render()))
+
+    # override entire dict
+    cmd.key_vals = {
+        'mousey': 300,
+        'doggy': 100,
+    }
+    assert "-key kitty '200'" not in cmd.render()
+    assert "-key doggy '100'" in cmd.render() and\
+        "-key mousey '300'" in cmd.render()
 
     # clear all
     cmd.key_vals.clear()
@@ -48,6 +57,7 @@ def test_dict_field():
 
 def test_prefix():
     cmd = SippCmd()
-    pre = 'doggy bath'
+    pre = "doggy bath"
     cmd.prefix = pre
-    assert cmd.render()[:len(pre) + 1] == pre + ' '
+    # single quotes are added
+    assert cmd.render() == "'{}'".format(pre) + ' '

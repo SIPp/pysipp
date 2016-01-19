@@ -4,15 +4,13 @@ unit testing
 import pytest
 import os
 import logging
-from pysipp.utils import LOG_FORMAT
-from pysipp import agent, scenario
+from pysipp import agent, scenario, utils
 
 
 def pytest_configure(config):
     # configure log level based on `-v` flags to pytest
-    logging.basicConfig(
+    utils.log_to_stderr(
         level=max(40 - config.option.verbose * 10, 10),
-        format=LOG_FORMAT
     )
 
 
