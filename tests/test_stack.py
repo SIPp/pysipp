@@ -58,7 +58,7 @@ def test_sync_run(scenwalk):
     """
     for path, scen in scenwalk():
         runner = scen(raise_exc=False, timeout=5)
-        for agent, proc in runner.agents.items():
+        for cmd, proc in runner.get(timeout=0).items():
             if 'default_with_confpy' in scen.name:
                 assert proc.returncode != 0
             else:
@@ -69,11 +69,9 @@ def test_basic(basic_scen):
     """Test the most basic uac <-> uas call flow
     """
     assert len(basic_scen.agents) == 2
-    runner = basic_scen.runner
     # ensure sync run works
-    r = basic_scen()
-    assert r == runner
-    assert not r.is_alive()
+    runner = basic_scen()
+    assert not runner.is_alive()
 
 
 def test_unreachable_uas(basic_scen):

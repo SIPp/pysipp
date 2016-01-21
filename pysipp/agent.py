@@ -83,19 +83,15 @@ class UserAgent(command.SippCmd):
     def call_load(self, tup):
         self.rate, self.limit, self.call_count = tup
 
-    def run(self, **kwargs):
-        return self(**kwargs)
-
     def __call__(self, block=True, timeout=180, runner=None, raise_exc=True,
                  **kwargs):
+
         # create and configure a temp scenario
         scen = plugin.mng.hook.pysipp_conf_scen_protocol(
             agents=[self], confpy=None
         )
-        # attach the used runner for post-portem in case the below
-        # call raises
-        self._runner = scen.runner
         # run the standard protocol
+        # (attach allocted runner for reuse/post-portem)
         return plugin.mng.hook.pysipp_run_protocol(
             scen=scen, block=block, timeout=timeout,
             runner=runner,
@@ -117,12 +113,6 @@ class UserAgent(command.SippCmd):
         for name in self._log_types:
             attr_name = 'trace_' + name
             setattr(self, attr_name, True)
-
-    @property
-    def streams(self):
-        """Standard streams strings packaged in a tuple
-        """
-        return self.runner.agents[self].streams
 
     @property
     def cmd(self):

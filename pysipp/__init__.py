@@ -21,9 +21,14 @@ pysipp - a python wrapper for launching SIPp
 import sys
 from os.path import dirname
 from load import iter_scen_dirs
-from launch import PopenRunner
+import launch
 import contextlib
 import report
+
+
+class SIPpFailure(RuntimeError):
+    """SIPp commands failed
+    """
 
 
 class plugin(object):
@@ -170,11 +175,6 @@ def pysipp_conf_scen_protocol(agents, confpy):
         # remove ^
         # hooks.pysipp_conf_scen.call_extra(scen=scen)
 
-        # create and attach a default runner for scenario and all agents
-        # if non exists
-        scen.runner = getattr(
-            scen, 'runner', hooks.pysipp_new_runner(scen=scen))
-
     return scen
 
 
@@ -213,10 +213,10 @@ def pysipp_conf_scen(scen):
 
 
 @plugin.hookimpl
-def pysipp_new_runner(scen):
+def pysipp_new_runner():
     """Provision and assign a default cmd runner
     """
-    return PopenRunner(scen.agents.values())
+    return launch.PopenRunner()
 
 
 @plugin.hookimpl
@@ -224,19 +224,36 @@ def pysipp_run_protocol(scen, runner, block, timeout, raise_exc):
     """"Invoked when a scenario object is called.
     """
     # use provided runner or default provided by hook
-    runner = runner or scen.runner
+    runner = runner or plugin.mng.hook.pysipp_new_runner()
+    agents = scen.agents.values()
 
     try:
-        # run scenario
-        agents2procs = runner(block=block, timeout=timeout)
-        if raise_exc and block:
-            report.raise_on_nz(agents2procs)
-    except RuntimeError:
-        # sync run so report results immediately
-        report.emit_logfiles(runner.agents)
-        raise
+        # run all agents (raises RuntimeError on timeout)
+        cmds2procs = runner(
+            (ua.render() for ua in agents),
+            block=block, timeout=timeout
+        )
+    except launch.TimeoutError:  # sucessful timeout
+        cmds2procs = runner.get(timeout=0)
+        report.emit_logfiles(zip(agents, cmds2procs.values()))
+        if raise_exc:
+            raise
 
-    # XXX async run must bundle up proc results for later processing
+    # async run
+    if not block:
+        # XXX async run must bundle up results for later processing
+        return runner
+
+    # sync run
+    agents2procs = zip(agents, cmds2procs.values())
+    msg = report.err_summary(agents2procs)
+    if msg:
+        # report logs and stderr
+        report.emit_logfiles(agents2procs)
+        if raise_exc:
+            # raise RuntimeError on agent failure(s)
+            raise SIPpFailure(msg)
+
     return runner
 
 

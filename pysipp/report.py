@@ -8,7 +8,7 @@ import utils
 
 log = utils.get_logger()
 
-ERRCODES = {
+EXITCODES = {
     0: "All calls were successful",
     1: "At least one call failed",
     15: "Process was terminated",
@@ -22,29 +22,30 @@ ERRCODES = {
 }
 
 
-def raise_on_nz(agents2procs):
-    """Raise an error detailing failed SIPp agent exit codes
+def err_summary(agents2procs):
+    """Return an error message detailing SIPp cmd exit codes
+    if any of the commands exitted with a non-zero status
     """
     name2ec = OrderedDict()
     # gather all exit codes
-    for ua, proc in agents2procs.items():
+    for ua, proc in agents2procs:
         name2ec[ua.name] = proc.returncode
 
     if any(name2ec.values()):
         # raise a detailed error
-        msg = "Some SIPp agents failed\n"
+        msg = "Some agents failed\n"
         msg += '\n'.join("'{}' with exit code '{}' -> {}".format(
-            name, rc, ERRCODES.get(rc, "unknown exit code"))
+            name, rc, EXITCODES.get(rc, "unknown exit code"))
             for name, rc in name2ec.items()
         )
-        raise RuntimeError(msg)
+        return msg
 
 
 def emit_logfiles(agents2procs, level='warn', max_lines=50):
     """Log all available SIPp log-file contents
     """
     emit = getattr(log, level)
-    for ua, proc in agents2procs.items():
+    for ua, proc in agents2procs:
 
         # print stderr
         emit("stderr for '{}'\n{}\n".format(ua.name, proc.streams.stderr))

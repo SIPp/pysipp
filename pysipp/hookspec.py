@@ -69,7 +69,7 @@ def pysipp_conf_scen(scen):
 
 
 @hookspec(firstresult=True)
-def pysipp_new_runner(scen):
+def pysipp_new_runner():
     """Create and return a runner instance to be used for invoking
     multiple SIPp commands. The runner must be callable and support both a
     `block` and `timeout` kwarg.

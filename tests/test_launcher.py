@@ -6,9 +6,9 @@ from pysipp.launch import PopenRunner
 
 
 def run_blocking(*agents):
-    runner = PopenRunner(agents)
+    runner = PopenRunner()
     assert not runner.is_alive()
-    runner()
+    runner(ua.render() for ua in agents)
     assert not runner.is_alive()
     return runner
 
@@ -24,12 +24,12 @@ def test_agent_fails():
     runner = run_blocking(uas, uac)
 
     # fails due to invalid ip
-    uasproc = runner.agents[uas]
+    uasproc = runner.get(timeout=0)[uas.render()]
     assert uasproc.streams.stderr
     assert uasproc.returncode == 255, uasproc.streams.stderr
 
     # killed by signal
-    uacproc = runner.agents[uac]
+    uacproc = runner.get(timeout=0)[uac.render()]
     # assert not uacproc.streams.stderr  # sometimes this has a log msg?
     ret = uacproc.returncode
     # killed by SIGUSR1 or terminates before it starts (racy)
@@ -40,5 +40,5 @@ def test_default_scen(default_agents):
     runner = run_blocking(*default_agents)
 
     # both agents should be successful
-    for ua, proc in runner.agents.items():
+    for cmd, proc in runner.get(timeout=0).items():
         assert not proc.returncode

@@ -2,7 +2,6 @@
 Agent wrapping
 '''
 import pytest
-from functools import partial
 from pysipp import agent, launch
 
 
@@ -57,27 +56,26 @@ def test_server():
     (agent.client('99.99.99.99', 5060), 1, {}, RuntimeError),
 
     # test if server times out it is signalled
-    (agent.server(), 0, {'timeout': 1}, RuntimeError)],
+    (agent.server(), 0, {'timeout': 1}, launch.TimeoutError)],
     ids=['ua', 'uac', 'uas'],
 )
-def test_call_fails(ua, retcode, kwargs, exc):
+def test_failures(ua, retcode, kwargs, exc):
     """Test failure cases for all types of agents
     """
-    # run it
-    if exc:
-        with pytest.raises(exc):
-            ua(**kwargs)
-        runner = ua._runner
-        agents = ua._runner.agents
-    else:
-        agents = ua(**kwargs).agents
-
+    # run it without raising
+    runner = ua(raise_exc=False, **kwargs)
+    cmds2procs = runner.get(timeout=0)
     assert not runner.is_alive()
     assert len(list(runner.iterprocs())) == 0
-    assert ua in agents
-    assert len(agents) == 1
-    proc = agents[ua]
+    assert ua.render() in cmds2procs
+    assert len(cmds2procs) == 1
+    proc = cmds2procs[ua.render()]
     assert proc.returncode == retcode
+
+    # rerun it with raising
+    if not exc:
+        with pytest.raises(RuntimeError):
+            ua(**kwargs)
 
 
 def test_scenario(default_agents):
