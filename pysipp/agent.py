@@ -74,6 +74,14 @@ class UserAgent(command.SippCmd):
         self.proxy_addr, self.proxy_port = pair
 
     @property
+    def ipcsockaddr(self, pair):
+        return SocketAddr(self.ipc_host, self.ipc_port)
+
+    @ipcsockaddr.setter
+    def ipcsockaddr(self, pair):
+        self.ipc_host, self.ipc_port = pair
+
+    @property
     def call_load(self, tup):
         """Shorthand attr for accessing load settings
         """

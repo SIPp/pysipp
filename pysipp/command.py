@@ -49,7 +49,8 @@ class BoolField(Field):
         super(type(self), self).__set__(obj, value)
 
     def render(self, value):
-        return self.fmtstr.format(**{self.name: ''})
+        # return the fmt string with a null string replacement
+        return self.fmtstr.format(**{self.name: ''}) if value else ''
 
 
 class DictField(Field):
@@ -169,7 +170,8 @@ sipp_spec = [
     '-timeout {timeout} ',
     '-d {pause_duration} ',
     '-default_behaviors {default_behaviors} ',
-    '-3pcc {sock3pcc} ',
+    ('-3pcc {ipc_host}', AddrField),  # NOTE: no space
+    ':{ipc_port} ',
     # SIP vars
     '-cid_str {cid_str} ',
     '-base_cseq {base_cseq} ',
