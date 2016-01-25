@@ -71,6 +71,6 @@ def emit_logfiles(agents2procs, level='warn', max_lines=50):
                         output = ''.join(lines)
                     # log it
                     emit("'{}' contents for '{}' @ {}:\n{}".format(
-                        name, ua.name, ua.sockaddr, output))
+                        name, ua.name, ua.srcaddr, output))
                     # FIXME: same as above
                     time.sleep(0.01)

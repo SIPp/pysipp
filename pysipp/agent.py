@@ -30,55 +30,55 @@ class UserAgent(command.SippCmd):
         return self.scen_name or path2namext(self.scen_file) or str(None)
 
     @property
-    def sockaddr(self):
+    def srcaddr(self):
         """Local socket info as a tuple
         """
         return SocketAddr(self.local_host, self.local_port)
 
-    @sockaddr.setter
-    def sockaddr(self, pair):
+    @srcaddr.setter
+    def srcaddr(self, pair):
         self.local_host, self.local_port = pair
 
     @property
-    def remotesockaddr(self):
+    def destaddr(self):
         """Local socket info as a tuple
         """
         return SocketAddr(self.remote_host, self.remote_port)
 
-    @remotesockaddr.setter
-    def remotesockaddr(self, pair):
+    @destaddr.setter
+    def destaddr(self, pair):
         self.remote_host, self.remote_port = pair
 
     @property
-    def mediasockaddr(self):
+    def mediaaddr(self):
         """Local socket info as a tuple
         """
         return SocketAddr(self.media_addr, self.media_port)
 
-    @mediasockaddr.setter
-    def mediasockaddr(self, pair):
+    @mediaaddr.setter
+    def mediaaddr(self, pair):
         self.media_addr, self.media_port = pair
 
     @property
-    def proxy(self):
+    def proxyaddr(self):
         """A tuple holding the (addr, port) socket pair which will be set as
         the `-rsa addr:port` flag to underlying SIPp UACs.
         """
-        return SocketAddr(self.proxy_addr, self.proxy_port)
+        return SocketAddr(self.proxy_host, self.proxy_port)
 
-    @proxy.setter
-    def proxy(self, pair):
+    @proxyaddr.setter
+    def proxyaddr(self, pair):
         if pair is None:
-            self.proxy_addr = self.proxy_port = None
+            self.proxy_host = self.proxy_port = None
 
-        self.proxy_addr, self.proxy_port = pair
+        self.proxy_host, self.proxy_port = pair
 
     @property
-    def ipcsockaddr(self, pair):
+    def ipcaddr(self, pair):
         return SocketAddr(self.ipc_host, self.ipc_port)
 
-    @ipcsockaddr.setter
-    def ipcsockaddr(self, pair):
+    @ipcaddr.setter
+    def ipcaddr(self, pair):
         self.ipc_host, self.ipc_port = pair
 
     @property
@@ -273,9 +273,10 @@ class MultiAccess(OrderedDict):
 
 
 class Scenario(object):
-    """Wraps user agents as a collection for configuration,
-    routing, and launching by hooks. It is callable and can be optionally
-    be invoked asynchronously.
+    """Wraps (subsets of) user agents in global state pertaining to configuration,
+    routing, and default arguments.
+
+    If called it will invoke the standard run hooks.
     """
     def __init__(self, agents, confpy=None):
         self._agents = agents  # original iterable
@@ -285,16 +286,6 @@ class Scenario(object):
         self.servers = MultiAccess.from_iter(
             a for a in agents if a.is_server())
         self.mod = confpy
-
-    @property
-    def proxy(self):
-        """Proxy socket for the first client in this scenario
-        """
-        return self.clients.values()[0].proxy
-
-    @proxy.setter
-    def proxy(self, value):
-        self.clients.values()[0].proxy = value
 
     @property
     def name(self):
@@ -314,9 +305,10 @@ class Scenario(object):
 
         return dirnames[0]
 
-    def socket2agent(self, socket, bytype=''):
-        """Lookup an agent by socket. `bytype` is a keyword which determines
-        which socket to use at the key and can be one of {'media', 'remote'}
+    def findbyaddr(self, socket, bytype=''):
+        """Lookup an agent by socket address. `bytype` is a keyword which
+        determines which socket to use at the key and can be one of
+        {'media', 'dest', 'src'}
         """
         for agent in self.agents.values():
             val = getattr(agent, "{}sockaddr".format(bytype), False)

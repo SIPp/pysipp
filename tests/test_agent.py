@@ -12,7 +12,7 @@ def ua():
 
 def test_ua(ua):
     sock = ('10.10.9.9', 5060)
-    ua.proxy = sock
+    ua.proxyaddr = sock
     assert ua.name == str(None)
     assert "'[{}]':'{}'".format(*sock) in ua.render()
 

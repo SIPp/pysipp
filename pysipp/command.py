@@ -155,7 +155,7 @@ sipp_spec = [
     ('-i {local_host} ', AddrField),
     '-p {local_port} ',
     '-s {uri_username} ',
-    ('-rsa {proxy_addr}', AddrField),  # NOTE: no space
+    ('-rsa {proxy_host}', AddrField),  # NOTE: no space
     ':{proxy_port} ',
     '-auth_uri {auth_uri} ',
     # sockets and protocols

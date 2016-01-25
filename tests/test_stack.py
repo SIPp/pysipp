@@ -79,7 +79,7 @@ def test_unreachable_uas(basic_scen):
     causing the uac to timeout on request responses. Ensure that an error is
     raised and that the appropriate log files are generated per agent.
     """
-    basic_scen.servers.proxy = ('127.0.0.1', 5070)
+    basic_scen.servers.proxyaddr = ('127.0.0.1', 5070)
     with pytest.raises(RuntimeError):
         basic_scen()
 

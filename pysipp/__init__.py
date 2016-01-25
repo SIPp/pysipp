@@ -112,7 +112,7 @@ def walk(rootpath, logdir=None, delay_conf_scen=False):
         yield path, scen
 
 
-def scenario(dirpath=None, logdir=None, proxy=None):
+def scenario(dirpath=None, logdir=None, proxyaddr=None):
     """Return a single Scenario loaded from `dirpath` if provided else the
     basic default call flow.
     """
@@ -123,14 +123,14 @@ def scenario(dirpath=None, logdir=None, proxy=None):
         # deliver the default scenario bound to loopback sockets
         uas = agent.server(
             local_host='127.0.0.1', local_port=5060, logdir=logdir)
-        uac = agent.client(*uas.sockaddr, logdir=uas.logdir)
+        uac = agent.client(*uas.srcaddr, logdir=uas.logdir)
 
         # same as above
         scen = plugin.mng.hook.pysipp_conf_scen_protocol(
             agents=[uas, uac], confpy=None)
 
-        if proxy:
-            scen.clients.proxy = proxy
+        if proxyaddr:
+            scen.clients.proxyaddr = proxyaddr
 
     return scen
 
@@ -198,12 +198,12 @@ def pysipp_conf_scen(scen):
     # point all clients to send requests to 'primary' server agent
     if scen.servers:
         uas = scen.servers.values()[0]
-        scen.clients.remotesockaddr = uas.sockaddr
+        scen.clients.destaddr = uas.srcaddr
 
-    elif not scen.clients.proxy:
+    elif not scen.clients.proxyaddr:
         # no servers in scenario so point proxy addr to remote socket addr
         for uac in scen.clients.values():
-            uac.proxy = uac.remotesockaddr
+            uac.proxyaddr = uac.destaddr
 
     # make the non-players echo media
     if scen.has_media and len(scen.agents) == 2:
