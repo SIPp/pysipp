@@ -17,8 +17,8 @@ def get_logger():
     return logging.getLogger('pysipp')
 
 
-def log_to_stderr(**kwargs):
-    defaults = {'format': LOG_FORMAT}
+def log_to_stderr(level="INFO", **kwargs):
+    defaults = {'format': LOG_FORMAT, 'level': level}
     defaults.update(kwargs)
     logging.basicConfig(**defaults)
 
