@@ -2,6 +2,7 @@ import logging
 import imp  # XXX py2.7
 import tempfile
 import os
+import inspect
 
 LOG_FORMAT = (
     "%(asctime)s %(threadName)s [%(levelname)s] %(name)s "
@@ -34,3 +35,64 @@ def load_mod(path, name=None):
     name = name or os.path.splitext(os.path.basename(path))[0]
     # load module sources
     return imp.load_source(name, path)
+
+
+def iter_data_descrs(cls):
+    """Deliver all public data-descriptors (for properties only if `fset` is
+    defined) as `name`, `attr`, pairs
+    """
+    for name in dir(cls):
+        attr = getattr(cls, name)
+        if inspect.isdatadescriptor(attr):
+            if (hasattr(attr, 'fset') and not attr.fset) or '_' in name[0]:
+                continue
+            yield name, attr
+
+
+def DictProxy(d, keys, cls=None):
+    """A dictionary proxy object which provides attribute access to the
+    elements of the provided dictionary `d`
+    """
+    class DictProxyAttr(object):
+        """An attribute which when modified proxies to an instance dictionary
+        named `dictname`.
+        """
+        def __init__(self, key):
+            self.key = key
+
+        def __get__(self, obj, cls):
+            if obj is None:
+                return self
+            return d.get(self.key)
+
+        def __set__(self, obj, value):
+            d[self.key] = value
+
+    # provide attribute access for all named keys
+    attrs = {key: DictProxyAttr(key) for key in keys}
+
+    if cls is not None:
+        # apply all attributes on provided type
+        for name, attr in attrs.items():
+            setattr(cls, name, attr)
+    else:
+        # delegate some methods to the original dict
+        proxied_attrs = [
+            '__repr__',
+            '__getitem__',
+            '__setitem__',
+            '__contains__',
+            '__len__',
+            'update',
+            'setdefault',
+        ]
+        attrs.update({attr: getattr(d, attr) for attr in proxied_attrs})
+
+        # construct required default methods
+        def init(self):
+            self.__dict__ = d
+
+        attrs.update({'__init__': init})
+
+        # render a new type
+        return type('DictProxy', (), attrs)
