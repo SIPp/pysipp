@@ -41,7 +41,7 @@ def err_summary(agents2procs):
         return msg
 
 
-def emit_logfiles(agents2procs, level='warn', max_lines=50):
+def emit_logfiles(agents2procs, level='warn', max_lines=100):
     """Log all available SIPp log-file contents
     """
     emit = getattr(log, level)
@@ -54,7 +54,7 @@ def emit_logfiles(agents2procs, level='warn', max_lines=50):
         time.sleep(0.01)
 
         # print log file contents
-        for name, fpath in ua.iter_logfile_items():
+        for name, fpath in ua.iter_toconsole_items():
             if fpath and path.isfile(fpath):
                 with open(fpath, 'r') as lf:
                     lines = lf.readlines()
