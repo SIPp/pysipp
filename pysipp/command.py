@@ -94,13 +94,12 @@ def cmdstrtype(spec):
         '/usr/bin/sipp doggy.com:5060 -i 192.168.0.1'
     '''
     class Renderer(object):
-        _params = OrderedDict()
+        _specparams = OrderedDict()
 
         def __init__(self, defaults=None):
             self._values = {}
             if defaults:
-                for name, value in defaults.items():
-                    setattr(self, name, value)
+                self.applydict(defaults)
             self._init = True  # lock attribute creation
 
         def __str__(self):
@@ -108,7 +107,7 @@ def cmdstrtype(spec):
 
         def render(self):
             tokens = []
-            for key, descr in self._params.items():
+            for key, descr in self._specparams.items():
                 # trigger descriptor protocol `__get__`
                 value = getattr(self, key)
                 if value is not None:
@@ -123,24 +122,45 @@ def cmdstrtype(spec):
             ) and (
                 key not in self.__class__.__dict__
             ) and (
-                key not in self._params
+                key not in self._specparams
             ) and key[0] is not '_':
                 raise AttributeError(
                     "no settable public attribute '{}' defined".format(key))
             object.__setattr__(self, key, value)
 
-        def copy(self):
-            return copy(self)
+        @classmethod
+        def descriptoritems(cls):
+            return utils.iter_data_descrs(cls)
+
+        @classmethod
+        def keys(cls):
+            return [key for key, descr in cls.descriptoritems()]
+
+        def applydict(self, d):
+            """Apply contents of dict `d` onto local instance variables
+            """
+            for name, value in d.items():
+                setattr(self, name, value)
+
+        def todict(self):
+            """Serialze all descriptor defined attributes into a dictionary
+            """
+            contents = {}
+            for key in self.keys():
+                val = getattr(self, key)
+                if val:
+                    contents[key] = val
+            return contents
 
     # build renderer type with custom descriptors
-    for fmtstr in spec:
-        if isinstance(fmtstr, tuple):
-            fmtstr, descriptor = fmtstr
+    for item in spec:
+        if isinstance(item, tuple):
+            fmtstr, descrtype = item
         else:
-            descriptor = Field
+            fmtstr, descrtype = item, Field
         fieldname = list(iter_format(fmtstr))[0][1]
-        descr = descriptor(fieldname, fmtstr)
-        Renderer._params[fieldname] = descr
+        descr = descrtype(fieldname, fmtstr)
+        Renderer._specparams[fieldname] = descr
         setattr(Renderer, fieldname, descr)
 
     return Renderer
