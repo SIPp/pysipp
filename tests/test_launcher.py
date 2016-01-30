@@ -14,12 +14,13 @@ def run_blocking(*agents):
 
 
 def test_agent_fails():
-    uas = server()
+    uas = server(call_count=1)
     # apply bogus ip which can't be bound
     uas.local_host, uas.local_port = '99.99.99.99', 5060
     # client calls server at bogus addr
-    uac = client(uas.local_host, uas.local_port)
+    uac = client(destaddr=(uas.local_host, uas.local_port))
     uac.recv_timeout = 1  # avoids SIPp issue #176
+    uac.call_count = 1  # avoids SIPp issue #176
 
     runner = run_blocking(uas, uac)
 

@@ -5,6 +5,8 @@ import pytest
 import pysipp
 import functools
 import os
+import itertools
+import tempfile
 
 
 @pytest.fixture
@@ -48,21 +50,19 @@ def test_confpy_hooks(scendir):
     agents = scen.agents.values()
     assert agents[0].is_client()
     assert agents[1].is_server()
-    # check multi-attr set was applied
-    for agent in scen.agents.values():
-        assert agent.remote_host == 'doggy'
+    # check that `scen.remote_host = 'doggy'` was applied
+    assert scen.defaults.uri_username == 'doggy'
+    for agent in scen.prepare():
+        assert agent.uri_username == 'doggy'
 
 
 def test_sync_run(scenwalk):
     """Ensure all scenarios in the test run to completion in synchronous mode
     """
     for path, scen in scenwalk():
-        runner = scen(raise_exc=False, timeout=5)
+        runner = scen(timeout=6)
         for cmd, proc in runner.get(timeout=0).items():
-            if 'default_with_confpy' in scen.name:
-                assert proc.returncode != 0
-            else:
-                assert proc.returncode == 0
+            assert proc.returncode == 0
 
 
 def test_basic(basic_scen):
@@ -79,16 +79,20 @@ def test_unreachable_uas(basic_scen):
     causing the uac to timeout on request responses. Ensure that an error is
     raised and that the appropriate log files are generated per agent.
     """
-    basic_scen.servers.proxyaddr = ('127.0.0.1', 5070)
+    basic_scen.serverdefaults.proxyaddr = ('127.0.0.1', 5070)
     with pytest.raises(RuntimeError):
         basic_scen()
 
     # verify log file generation for each agent
-    uas = basic_scen.agents['uas']
+    uas = basic_scen.prepare()[0]
     logdir = uas.logdir
-    numagents = len(basic_scen.agents)
-    numlogs = len(list(uas.iter_logfile_items()))
-    assert numagents * 3 <= len(os.listdir(logdir)) <= numagents * numlogs
+    # verify log file generation
+    for name, path in itertools.chain(
+        *[tuple(ua.iter_logfile_items()) for ua in basic_scen.prepare()]
+    ):
+        assert tempfile.gettempdir() in path
+        assert logdir in path
+        assert os.path.isfile(path)
 
 
 # def test_async_run(scenwalk):
