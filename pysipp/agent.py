@@ -29,7 +29,9 @@ def tuple_property(attrs):
         for attr, val in zip(attrs, pair or repeat(None)):
             setattr(self, attr, val)
 
-    return property(getter, setter)
+    doc = "{} parameters composed as a tuple".format(', '.join(attrs))
+
+    return property(getter, setter, doc=doc)
 
 
 class UserAgent(command.SippCmd):
@@ -159,6 +161,10 @@ def server(**kwargs):
     defaults = {
         'scen_name': 'uas',
     }
+    if 'dstaddr' in kwargs:
+        raise ValueError(
+            "User agent server does not accept a destination address"
+        )
     # override with user settings
     defaults.update(kwargs)
     return ua(**defaults)

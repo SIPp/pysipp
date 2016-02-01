@@ -1,32 +1,47 @@
 # `pysipp` is for people who hate SIPp
-and use it for automated testing because it gets the job done...
+but (want to) use it for automated testing because it gets the job done...
 
 
 ## What is it?
-A python wrapper for easily configuring and launching the infamous
-[SIPp](http://sipp.sourceforge.net/). It allows for invoking multi-UA
-scenarios from Python thus avoiding nightmarish shell command concoctions.
+Python configuring and launching the infamous
+[SIPp](http://sipp.sourceforge.net/) using an api inspired by
+[requests](http://docs.python-requests.org/)
+
+## It definitely lets you
+
+- Launch multi-UA scenarios (aka SIPp subprocesses) sanely
+  * avoids nightmarish shell command concoctions from multiple terminals
+  * allows for complex functional or end-to-end SIP testing
+- Reuse your existing SIPp XML scripts
+- Integrate nicely with [pytest](http://pytest.org/)
 
 
-## Quick start
+## It doesn't try to
+
+- Auto-generate SIPp XML scripts like [sippy_cup](https://github.com/mojolingo/sippy_cup)
+  * we believe this is the wrong way to work around the problem of SIPp's shitty XML control language
+
+
+## Usage
 Launching the default uac scenario is a short line:
 
 ```python
 import pysipp
-pysipp.client('10.10.8.88', 5060)()
+pysipp.client(destaddr=('10.10.8.88', 5060))()
 ```
 
-Manually running the default uac <-> uas scenario is simple as well:
+Manually running the default `uac` --calls--> `uas` scenario is also simple:
 
 ```python
-uas = pysipp.server(sockaddr=('10.10.8.88', 5060))
-uac = pysipp.client(*uas.sockaddr)
-uas(block=False)
+uas = pysipp.server(srcaddr=('10.10.8.88', 5060))
+uac = pysipp.client(uas.srcaddr)
+uas(block=False)  # returns a `pysipp.launch.PopenRunner` instance by default
 uac()
 ```
 
 For more complex multi-UA orchestrations we can use
-a `pysipp.scenario`. The scenario above is the default:
+a `pysipp.scenario`. The scenario from above is the default
+agent configuration:
 
 ```python
 scen = pysipp.scenario()
@@ -43,12 +58,24 @@ test_scenario/
   referer_uas.xml
   referee_uas.xml
 ```
-and your DUT is listening on socket `10.10.8.1:5060`
+
+If you've configured your DUT to listen for for SIP on `10.10.8.1:5060`
+and route traffic to the destination specified in the SIP `TO:` header
+and your local ip address is `10.10.8.8`:
 
 ```python
 scen = pysipp.scenario(scendir='path/to/test_scenario/',
-    proxy=('10.10.8.1', 5060)
+    proxyaddr=('10.10.8.1', 5060)
 )
+
+# setup local server sockets
+for port, ua in enumerate(scen.servers.values(), 5080):
+    ua.srcaddr = ('10.10.8.8', port)
+
+# point client at first server
+scen.clientdefaults.destaddr = scen.servers.values()[0].srcaddr
+
+# run all agents in sequence starting with servers
 scen()
 ```
 
@@ -58,8 +85,13 @@ them:
 ```python
 for path, scen in pysipp.walk('path/to/scendirs/root/'):
     print("running scenario collected from {}".format(path))
+    # ... steps from above ...
     scen()
 ```
+
+To see the mapping of SIPp command line args to `pysipp.agent.UserAgent`
+attributes, take a look at `pysipp.command.sipp_spec`.
+This should give you an idea of what can be set on each agent.
 
 
 ## Features
@@ -71,15 +103,15 @@ for path, scen in pysipp.walk('path/to/scendirs/root/'):
 
 
 ## Dependencies
-SIPp duh. Get the latest version on
-[github](http://sipp.sourceforge.net/)
+SIPp duh...Get the latest version on [github](https://github.com/SIPp/sipp)
 
 
 ## Install
 from git
 ```
-pip install pip install git+git://github.com/tgoodlet/pysipp.git
+pip install git+git://github.com/tgoodlet/pysipp.git
 ```
+
 
 ## Hopes and dreams
 I'd love to see `pysipp` become a standard end-to-end unit testing
@@ -88,4 +120,8 @@ tool for SIPp itself (particularly if paired with `pytest`).
 Other thoughts are that someone might one day write actual
 Python bindings to the internals of SIPp such that a pure Python DSL
 can be used instead of the silly default xml SIP-flow mini-language.
-If/when that happens, pysipp can serve as the front end interface.
+If/when that happens, pysipp can serve as a front end interface.
+
+
+## Advanced Usage
+Coming soon...

@@ -28,8 +28,8 @@ with open('README.md') as f:
 setup(
     name="pysipp",
     version='0.1.alpha',
-    description='pysipp is Python wrapper for configuring and launching SIPp scenarios for use in'
-                ' automated testing',
+    description='pysipp is a SIPp scenario launcher for for use in'
+                ' automated VoIP testing',
     long_description=readme,
     license='GPLv2',
     author='Tyler Goodlet',
