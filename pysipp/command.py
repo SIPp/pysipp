@@ -2,7 +2,7 @@
 Command string rendering
 '''
 import string
-from copy import copy
+import socket
 from collections import OrderedDict
 import utils
 
@@ -38,8 +38,16 @@ class Field(object):
 
 class AddrField(Field):
     def render(self, value):
-        return self.fmtstr.format(
-            **{self.name: "'[{}]'".format(value)}) if value else ''
+        if not value:
+            return
+
+        try:
+            socket.inet_pton(socket.AF_INET6, value)
+            name = "'[{}]'".format(value)
+        except socket.error:
+            name = "'{}'".format(value)
+
+        return self.fmtstr.format(**{self.name: name})
 
 
 class BoolField(Field):
