@@ -87,12 +87,12 @@ def test_unreachable_uas(basic_scen):
     uas = basic_scen.prepare()[0]
     logdir = uas.logdir
     # verify log file generation
-    for name, path in itertools.chain(
-        *[tuple(ua.iter_logfile_items()) for ua in basic_scen.prepare()]
-    ):
-        assert tempfile.gettempdir() in path
-        assert logdir in path
-        assert os.path.isfile(path)
+    for ua in basic_scen.prepare():
+        for name, path in ua.iter_logfile_items():
+            assert tempfile.gettempdir() in path
+            assert ua.name in path
+            assert logdir in path
+            assert os.path.isfile(path)
 
 
 # def test_async_run(scenwalk):

@@ -55,7 +55,7 @@ class UserAgent(command.SippCmd):
     mediaaddr = tuple_property(('media_addr', 'media_port'))
     proxyaddr = tuple_property(('proxy_host', 'proxy_port'))
     ipcaddr = tuple_property(('ipc_host', 'ipc_port'))
-    call_load = tuple_property(('limit', 'rate', 'call_count'))
+    call_load = tuple_property(('rate', 'limit', 'call_count'))
 
     def __call__(self, block=True, timeout=180, runner=None, raise_exc=True,
                  **kwargs):
@@ -103,9 +103,9 @@ class UserAgent(command.SippCmd):
 
     @logdir.setter
     def logdir(self, dirpath):
-        assert path.isdir(dirpath)
+        assert path.isdir(dirpath), '{} is an invalid path'.format(dirpath)
         for name, attr in self.iter_logfile_items():
-            # set all log files
+            # assemble all log file paths
             setattr(self, name,
                     path.join(dirpath, "{}_{}".format(self.name, name)))
 
@@ -117,7 +117,7 @@ class UserAgent(command.SippCmd):
     def plays_media(self, patt='play_pcap_audio'):
         """Bool determining whether script plays media
         """
-        # FIXME: should be able to parse using -sd
+        # TODO: should be able to parse using -sd
         if not self.scen_file:
             return False
 

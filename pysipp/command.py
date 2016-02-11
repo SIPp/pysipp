@@ -137,9 +137,19 @@ def cmdstrtype(spec):
             return [key for key, descr in cls.descriptoritems()]
 
         def applydict(self, d):
-            """Apply contents of dict `d` onto local instance variables
+            """Apply contents of dict `d` onto local instance variables.
+            Composite attrs (those not found in `_specparams`) are applied
+            last so that any inter-attr dependencies are (hopefully) resolved.
             """
+            composite = OrderedDict()
             for name, value in d.items():
+                if name not in self._specparams:
+                    composite[name] = value
+                else:
+                    setattr(self, name, value)
+
+            # apply composites last
+            for name, value in composite.items():
                 setattr(self, name, value)
 
         def todict(self):
