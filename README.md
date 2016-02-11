@@ -34,9 +34,10 @@ Manually running the default `uac` --calls--> `uas` scenario is also simple:
 
 ```python
 uas = pysipp.server(srcaddr=('10.10.8.88', 5060))
-uac = pysipp.client(uas.srcaddr)
+uac = pysipp.client(destaddr=uas.srcaddr)
+# run server async
 uas(block=False)  # returns a `pysipp.launch.PopenRunner` instance by default
-uac()
+uac()  # run client synchronously
 ```
 
 For more complex multi-UA orchestrations we can use
@@ -124,4 +125,20 @@ If/when that happens, pysipp can serve as a front end interface.
 
 
 ## Advanced Usage
-Coming soon...
+`pysipp` comes packed with some nifty features for customizing
+SIPp default command configuration and launching as well as detailed
+console reporting. There is even support for remote execution of SIPp
+over the network using [rpyc](https://rpyc.readthedocs.org/en/latest/)
+
+### Enable detailed console reporting
+```python
+pysipp.utils.log_to_stderr("DEBUG")
+```
+
+### Applying default settings
+For now see [#4](https://github.com/tgoodlet/pysipp/issues/4)
+
+More to come...
+- writing plugins
+- remote execution
+- async mult-scenario load testing
