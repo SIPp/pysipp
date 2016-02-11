@@ -61,3 +61,19 @@ def test_prefix():
     cmd.prefix = pre
     # single quotes are added
     assert cmd.render() == "'{}'".format(pre) + ' '
+
+
+def test_addr_field():
+    cmd = SippCmd()
+    cmd.proxy_host = None
+    assert not cmd.render()
+
+    cmd.proxy_host = '127.0.0.1'
+    cmd.proxy_port = 5060
+    assert cmd.render() == "-rsa '127.0.0.1':'5060' "
+
+    cmd.proxy_host = '::1'
+    assert cmd.render() == "-rsa '[::1]':'5060' "
+
+    cmd.proxy_host = 'example.com'
+    assert cmd.render() == "-rsa 'example.com':'5060' "
