@@ -2,7 +2,6 @@
 Command string rendering
 '''
 import string
-from copy import copy
 from collections import OrderedDict
 import utils
 
