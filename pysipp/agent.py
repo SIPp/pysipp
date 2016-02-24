@@ -122,7 +122,7 @@ class UserAgent(command.SippCmd):
             return False
 
         with open(self.scen_file, 'r') as sf:
-            return bool(re.match(patt, sf.read()))
+            return bool(re.search(patt, sf.read()))
 
 
 def path2namext(filepath):
