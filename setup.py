@@ -34,7 +34,7 @@ setup(
     license='GPLv2',
     author='Tyler Goodlet',
     author_email='tgoodlet@gmail.com',
-    url='https://github.com/tgoodlet/pysipp',
+    url='https://github.com/SIPp/pysipp',
     platforms=['linux'],
     packages=['pysipp'],
     install_requires=['pluggy==0.3.1'],

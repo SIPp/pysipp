@@ -110,7 +110,7 @@ SIPp duh...Get the latest version on [github](https://github.com/SIPp/sipp)
 ## Install
 from git
 ```
-pip install git+git://github.com/tgoodlet/pysipp.git
+pip install git+git://github.com/SIPp/pysipp.git
 ```
 
 
@@ -136,7 +136,7 @@ pysipp.utils.log_to_stderr("DEBUG")
 ```
 
 ### Applying default settings
-For now see [#4](https://github.com/tgoodlet/pysipp/issues/4)
+For now see [#4](https://github.com/SIPp/pysipp/issues/4)
 
 More to come...
 - writing plugins
