@@ -95,6 +95,31 @@ def test_unreachable_uas(basic_scen):
             assert os.path.isfile(path)
 
 
+def test_hook_overrides(basic_scen):
+    """Ensure that composite agent attributes (such as socket addresses) do
+    not override individual agent argument attrs that were set explicitly
+    elsewhere (eg. in a hook).
+    """
+    class Router(object):
+        @pysipp.plugin.hookimpl
+        def pysipp_conf_scen(self, agents, scen):
+            # no explicit port is set on agents by default
+            agents['uas'].local_port = 5090
+            agents['uac'].remote_port = agents['uas'].local_port
+
+    with pysipp.plugin.register([Router()]):
+        pysipp.plugin.mng.hook.pysipp_conf_scen(
+            agents=basic_scen.agents, scen=basic_scen)
+
+    # apply a composite socket addr attr
+    basic_scen.clientdefaults['destaddr'] = '10.10.99.99', 'doggy'
+
+    # destaddr set in clientdefaults should not override agent values
+    agents = basic_scen.prepare()
+    # ensure uac still points to uas port
+    assert agents[1].remote_port == agents[0].local_port
+
+
 # def test_async_run(scenwalk):
 #     """Ensure all scenarios in the test run to completion in asynchronous
 #     mode
