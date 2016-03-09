@@ -27,9 +27,7 @@ def tuple_property(attrs):
 
     def setter(self, pair):
         for attr, val in zip(attrs, pair or repeat(None)):
-            # only apply if not already set in this instance's dict
-            if not getattr(self, attr, None):
-                setattr(self, attr, val)
+            setattr(self, attr, val)
 
     doc = "{} parameters composed as a tuple".format(', '.join(attrs))
 
