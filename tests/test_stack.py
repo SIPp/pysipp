@@ -25,10 +25,8 @@ def test_collect(scenwalk):
         def pysipp_load_scendir(self, path, xmls, confpy):
             return False
 
-    ba = blockall()
-    pysipp.plugin.mng.register(ba)
-    assert not len(list(scenwalk()))
-    pysipp.plugin.mng.unregister(ba)
+    with pysipp.plugin.register([blockall()]):
+        assert not len(list(scenwalk()))
 
     @pysipp.plugin.hookimpl
     def confpy_included(self, path, xmls, confpy):
@@ -89,10 +87,8 @@ def test_unreachable_uas(basic_scen):
     # verify log file generation
     for ua in basic_scen.prepare():
         for name, path in ua.iter_logfile_items():
-            assert tempfile.gettempdir() in path
-            assert ua.name in path
-            assert logdir in path
             assert os.path.isfile(path)
+            os.remove(path)
 
 
 def test_hook_overrides(basic_scen):

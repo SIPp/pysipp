@@ -86,11 +86,6 @@ class UserAgent(command.SippCmd):
     def iter_toconsole_items(self):
         yield 'screen_file', self.screen_file
 
-    def enable_tracing(self):
-        for name in self._log_types:
-            attr_name = 'trace_' + name
-            setattr(self, attr_name, True)
-
     @property
     def cmd(self):
         """Rendered SIPp command string
@@ -104,13 +99,6 @@ class UserAgent(command.SippCmd):
     @logdir.setter
     def logdir(self, dirpath):
         assert path.isdir(dirpath), '{} is an invalid path'.format(dirpath)
-        for name, attr in self.iter_logfile_items():
-            # assemble all log file paths
-            setattr(self, name,
-                    path.join(dirpath, "{}_{}".format(self.name, name)))
-
-        # enable all corresponding trace flag args
-        self.enable_tracing()
         self._logdir = dirpath
 
     @property
@@ -123,6 +111,27 @@ class UserAgent(command.SippCmd):
 
         with open(self.scen_file, 'r') as sf:
             return bool(re.search(patt, sf.read()))
+
+    def enable_tracing(self):
+        """Enable trace flags for this command
+        """
+        for name in self._log_types:
+            attr_name = 'trace_' + name
+            setattr(self, attr_name, True)
+
+    def enable_logging(self, logdir=None):
+        """Enable agent logging by appending appropriately named log file
+        arguments to the underlying command.
+        """
+        # prefix all log file paths
+        for name, attr in self.iter_logfile_items():
+            setattr(
+                self, name, path.join(
+                    logdir or self.logdir or tempfile.gettempdir(),
+                    "{}_{}".format(self.name, name))
+            )
+
+        self.enable_tracing()
 
 
 def path2namext(filepath):
@@ -346,9 +355,11 @@ class ScenarioType(object):
         ordered = [self._defaults, secondary, agent.todict()]
         for name, defs in zip(['defaults', dname, 'agent.todict()'], ordered):
             log.debug("'{}' contents:\n{}".format(name, defs))
+
         params = merge(ordered)
         log.debug("merged contents:\n{}".format(params))
         ua = UserAgent(defaults=params)
+        ua.enable_logging()
 
         # call post defaults hook
         plugin.mng.hook.pysipp_post_ua_defaults(ua=ua)

@@ -34,7 +34,7 @@ def err_summary(agents2procs):
     if any(name2ec.values()):
         # raise a detailed error
         msg = "Some agents failed\n"
-        msg += '\n'.join("'{}' with exit code '{}' -> {}".format(
+        msg += '\n'.join("'{}' with exit code {} -> {}".format(
             name, rc, EXITCODES.get(rc, "unknown exit code"))
             for name, rc in name2ec.items()
         )

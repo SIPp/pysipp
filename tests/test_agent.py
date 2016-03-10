@@ -1,7 +1,10 @@
 '''
-Agent wrapping
+pysipp.agent module tests
 '''
 import pytest
+import tempfile
+import os
+import pysipp
 from pysipp import agent, launch, plugin
 
 
@@ -11,22 +14,56 @@ def ua():
 
 
 def test_ua(ua):
+    """Set up a typeless agent and perform basic attr checks
+    """
     sock = ('10.10.9.9', 5060)
     ua.proxyaddr = sock
     assert ua.name == str(None)
     assert "'{}':'{}'".format(*sock) in ua.render()
 
 
-def test_logdir(ua):
-    logdir = ua.logdir
+def check_log_files(ua, logdir=None):
+    logdir = logdir or ua.logdir
     assert logdir
+
+    # check attr values contain logdir and agent name
+    for name, path in ua.iter_logfile_items():
+        assert logdir in path
+        assert ua.name in path
+
     cmd = ua.render()
+    assert logdir in cmd
     logs = [token for token in cmd.split() if logdir in token]
-    assert len(logs) == len(ua._log_types)  # currently default num of logs
+    # check num of args with logdir in the value
+    assert len(logs) == len(ua._log_types)
+
+
+@pytest.mark.parametrize(
+    "funcname",
+    ['ua', 'client', 'server'],
+)
+def test_logdir(funcname):
+    """Verify that a default logdir is set and filenames are
+    based on the agent's name.
+    """
+    func = getattr(agent, funcname)
+    # enables SIPp logging by default
+    ua = agent.Scenario([func()]).prepare()[0]
+    check_log_files(ua, tempfile.gettempdir())
+
+
+def test_scen_logdir():
+    """Verify log file arguments when logdir is set using Scenario.defaults
+    """
+    scen = pysipp.scenario()
+    logdir = os.getcwd()
+    scen.defaults.logdir = logdir
+    for ua in scen.prepare():
+        check_log_files(ua, logdir)
 
 
 def test_client():
-    # built-in scen
+    # check the built-in uac xml scenario
     remote_sock = ('192.168.1.1', 5060)
     uac = agent.client(destaddr=remote_sock)
     cmdstr = uac.render()
