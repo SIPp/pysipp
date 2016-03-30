@@ -196,6 +196,7 @@ _dd = {
     'global_vars': {},
 }
 _defaults = {
+    'local_host': '127.0.0.1',
     'recv_timeout': 5000,
     'call_count': 1,
     'rate': 1,
@@ -378,7 +379,8 @@ class ScenarioType(object):
         return copies
 
     def from_agents(self, agents):
-        return type(self)(self.prepare(agents), confpy=self.mod)
+        return type(self)(
+            self.prepare(agents), self._defaults, confpy=self.mod)
 
     def __call__(self, agents=None, block=True, timeout=180, runner=None,
                  raise_exc=True, copy_agents=False, **kwargs):

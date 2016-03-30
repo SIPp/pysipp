@@ -171,7 +171,7 @@ def pysipp_conf_scen(agents, scen):
     """
     if scen.servers:
         # point all clients to send requests to 'primary' server agent
-        servers_addr = scen.serverdefaults.setdefault(
+        servers_addr = scen.serverdefaults.get(
                 'srcaddr', ('127.0.0.1', 5060))
         uas = scen.servers.values()[0]
         scen.clientdefaults.destaddr = uas.srcaddr or servers_addr
@@ -203,6 +203,23 @@ def pysipp_run_protocol(scen, runner, block, timeout, raise_exc):
     runner = runner or plugin.mng.hook.pysipp_new_runner()
     agents = scen.prepare()
 
+    def finalize(cmds2procs=None, timeout=180, raise_exc=True):
+        """Wait for all remaining agents in the scenario to finish executing
+        and perform error and logfile reporting.
+        """
+        cmds2procs = cmds2procs or runner.get(timeout=timeout)
+        agents2procs = zip(agents, cmds2procs.values())
+        msg = report.err_summary(agents2procs)
+        if msg:
+            # report logs and stderr
+            report.emit_logfiles(agents2procs)
+            if raise_exc:
+                # raise RuntimeError on agent failure(s)
+                # (HINT: to rerun type `scen()` from the debugger)
+                raise SIPpFailure(msg)
+
+        return cmds2procs
+
     try:
         # run all agents (raises RuntimeError on timeout)
         cmds2procs = runner(
@@ -210,26 +227,18 @@ def pysipp_run_protocol(scen, runner, block, timeout, raise_exc):
             block=block, timeout=timeout
         )
     except launch.TimeoutError:  # sucessful timeout
-        cmds2procs = runner.get(timeout=0)
-        report.emit_logfiles(zip(agents, cmds2procs.values()))
+        cmd2procs = finalize(timeout=0, raise_exc=False)
         if raise_exc:
             raise
+    else:
+        # async
+        if not block:
+            # XXX async run must bundle up results for later processing
+            scen.finalize = finalize
+            return finalize
 
-    # async run
-    if not block:
-        # XXX async run must bundle up results for later processing
-        return runner
-
-    # sync run
-    agents2procs = zip(agents, cmds2procs.values())
-    msg = report.err_summary(agents2procs)
-    if msg:
-        # report logs and stderr
-        report.emit_logfiles(agents2procs)
-        if raise_exc:
-            # raise RuntimeError on agent failure(s)
-            # (HINT: to rerun type `scen()` from the debugger)
-            raise SIPpFailure(msg)
+        # sync
+        finalize(cmds2procs, raise_exc=raise_exc)
 
     return runner
 

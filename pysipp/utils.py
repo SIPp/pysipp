@@ -83,6 +83,7 @@ def DictProxy(d, keys, cls=None):
             '__setitem__',
             '__contains__',
             '__len__',
+            'get',
             'update',
             'setdefault',
         ]
