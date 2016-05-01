@@ -196,7 +196,6 @@ _dd = {
     'global_vars': {},
 }
 _defaults = {
-    'local_host': '127.0.0.1',
     'recv_timeout': 5000,
     'call_count': 1,
     'rate': 1,
