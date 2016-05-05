@@ -40,8 +40,8 @@ __author__ = 'Tyler Goodlet (tgoodlet@gmail.com)'
 __all__ = ['walk', 'client', 'server', 'plugin']
 
 
-def walk(rootpath, logdir=None, delay_conf_scen=False, defaults=None,
-         autolocalsocks=True):
+def walk(rootpath, logdir=None, delay_conf_scen=False, autolocalsocks=True,
+         **scenkwargs):
     """SIPp scenario generator.
 
     Build and return scenario objects for each scenario directory.
@@ -84,21 +84,21 @@ def walk(rootpath, logdir=None, delay_conf_scen=False, defaults=None,
                 scen = hooks.pysipp_conf_scen_protocol(
                     agents=agents,
                     confpy=confpy,
-                    defaults=defaults,
+                    scenkwargs=scenkwargs,
                 )
 
             yield path, scen
 
 
-def scenario(dirpath=None, logdir=None, proxyaddr=None, defaults=None,
-             autolocalsocks=True):
+def scenario(dirpath=None, logdir=None, proxyaddr=None, autolocalsocks=True,
+             **scenkwargs):
     """Return a single Scenario loaded from `dirpath` if provided else the
     basic default call flow.
     """
     if dirpath:
         # deliver single scenario from dir
         path, scen = next(
-            walk(dirpath, defaults=defaults, autolocalsocks=autolocalsocks)
+            walk(dirpath, autolocalsocks=autolocalsocks, **scenkwargs)
         )
     else:
         with plugin.register([netplug] if autolocalsocks else []):
@@ -108,7 +108,9 @@ def scenario(dirpath=None, logdir=None, proxyaddr=None, defaults=None,
 
             # same as above
             scen = plugin.mng.hook.pysipp_conf_scen_protocol(
-                agents=[uas, uac], confpy=None, defaults=defaults)
+                agents=[uas, uac], confpy=None,
+                scenkwargs=scenkwargs
+            )
 
             if proxyaddr:
                 assert isinstance(
@@ -128,7 +130,7 @@ def pysipp_load_scendir(path, xmls, confpy):
 
 
 @plugin.hookimpl
-def pysipp_conf_scen_protocol(agents, confpy, defaults):
+def pysipp_conf_scen_protocol(agents, confpy, scenkwargs):
     """Perform default configuration rule set
     """
     # more sanity
@@ -150,7 +152,7 @@ def pysipp_conf_scen_protocol(agents, confpy, defaults):
 
         # create scenario wrapper
         scen = hooks.pysipp_new_scen(
-            agents=agents, confpy=confpy, defaults=defaults)
+            agents=agents, confpy=confpy, scenkwargs=scenkwargs)
 
         # configure scenario
         hooks.pysipp_conf_scen(agents=scen.agents, scen=scen)
@@ -171,8 +173,8 @@ def pysipp_order_agents(agents, clients, servers):
 
 
 @plugin.hookimpl
-def pysipp_new_scen(agents, confpy, defaults):
-    return agent.Scenario(agents, confpy=confpy, defaults=defaults)
+def pysipp_new_scen(agents, confpy, scenkwargs):
+    return agent.Scenario(agents, confpy=confpy, **scenkwargs)
 
 
 @plugin.hookimpl(trylast=True)
@@ -183,7 +185,7 @@ def pysipp_conf_scen(agents, scen):
         # point all clients to send requests to 'primary' server agent
         # if they aren't already
         servers_addr = scen.serverdefaults.get('srcaddr', ('127.0.0.1', 5060))
-        uas = scen.servers.values()[0]
+        uas = scen.prepare_agent(scen.servers.values()[0])
         scen.clientdefaults.setdefault('destaddr', uas.srcaddr or servers_addr)
 
     elif not scen.clientdefaults.proxyaddr:
