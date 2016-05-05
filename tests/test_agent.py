@@ -106,7 +106,7 @@ def test_failures(ua, retcode, kwargs, exc):
     assert len(list(runner.iterprocs())) == 0
     # tests transparency of the defaults config pipeline
     scen = plugin.mng.hook.pysipp_conf_scen_protocol(
-        agents=[ua], confpy=None, defaults=None)
+        agents=[ua], confpy=None, scenkwargs={})
     cmd = scen.prepare_agent(ua).render()
     assert cmd in cmds2procs
     assert len(cmds2procs) == 1

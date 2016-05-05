@@ -62,7 +62,7 @@ class UserAgent(command.SippCmd):
 
         # create and configure a temp scenario
         scen = plugin.mng.hook.pysipp_conf_scen_protocol(
-            agents=[self], confpy=None, defaults=None,
+            agents=[self], confpy=None, scenkwargs={},
         )
         # run the standard protocol
         # (attach allocted runner for reuse/post-portem)
@@ -196,7 +196,6 @@ _dd = {
     'global_vars': {},
 }
 _defaults = {
-    'local_host': '127.0.0.1',
     'recv_timeout': 5000,
     'call_count': 1,
     'rate': 1,
@@ -378,7 +377,9 @@ class ScenarioType(object):
             copies.append(self.prepare_agent(agent))
         return copies
 
-    def from_agents(self, agents):
+    def from_agents(self, agents=None):
+        """Create a new scenario from prepared agents.
+        """
         return type(self)(
             self.prepare(agents), self._defaults, confpy=self.mod)
 

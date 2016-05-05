@@ -24,6 +24,7 @@ from load import iter_scen_dirs
 import launch
 import report
 import plugin
+import netplug
 import agent
 from agent import client, server
 
@@ -39,71 +40,82 @@ __author__ = 'Tyler Goodlet (tgoodlet@gmail.com)'
 __all__ = ['walk', 'client', 'server', 'plugin']
 
 
-def walk(rootpath, logdir=None, delay_conf_scen=False, defaults=None):
+def walk(rootpath, logdir=None, delay_conf_scen=False, autolocalsocks=True,
+         **scenkwargs):
     """SIPp scenario generator.
 
     Build and return scenario objects for each scenario directory.
     Most hook calls are described here.
     """
-    hooks = plugin.mng.hook
-    for path, xmls, confpy in iter_scen_dirs(rootpath):
-        # sanity checks
-        for xml in xmls:
-            assert dirname(xml) == path
-        if confpy:
-            assert dirname(confpy.__file__) == path
+    with plugin.register([netplug] if autolocalsocks else []):
+        hooks = plugin.mng.hook
+        for path, xmls, confpy in iter_scen_dirs(rootpath):
+            # sanity checks
+            for xml in xmls:
+                assert dirname(xml) == path
+            if confpy:
+                assert dirname(confpy.__file__) == path
 
-        # predicate hook based filtering
-        res = hooks.pysipp_load_scendir(path=path, xmls=xmls, confpy=confpy)
-        if res and not all(res):
-            continue
+            # predicate hook based filtering
+            res = hooks.pysipp_load_scendir(
+                path=path, xmls=xmls, confpy=confpy)
+            if res and not all(res):
+                continue
 
-        agents = []
-        for xml in xmls:
-            if 'uac' in xml.lower():
-                ua = agent.client(scen_file=xml, logdir=logdir)
-                agents.append(ua)
-            elif 'uas' in xml.lower():
-                ua = agent.server(scen_file=xml, logdir=logdir)
-                agents.insert(0, ua)  # servers are always launched first
+            agents = []
+            for xml in xmls:
+                if 'uac' in xml.lower():
+                    ua = agent.client(scen_file=xml, logdir=logdir)
+                    agents.append(ua)
+                elif 'uas' in xml.lower():
+                    ua = agent.server(scen_file=xml, logdir=logdir)
+                    agents.insert(0, ua)  # servers are always launched first
+                else:
+                    raise ValueError(
+                        "xml script must contain one of 'uac' or 'uas':\n{}"
+                        .format(xml)
+                    )
+
+            if delay_conf_scen:
+                # default scen impl
+                scen = agent.Scenario(agents, confpy=confpy)
+
             else:
-                raise ValueError(
-                    "xml script must contain one of 'uac' or 'uas':\n{}"
-                    .format(xml)
+                scen = hooks.pysipp_conf_scen_protocol(
+                    agents=agents,
+                    confpy=confpy,
+                    scenkwargs=scenkwargs,
                 )
 
-        if delay_conf_scen:
-            # default scen impl
-            scen = agent.Scenario(agents, confpy=confpy)
-
-        else:
-            scen = hooks.pysipp_conf_scen_protocol(
-                agents=agents,
-                confpy=confpy,
-                defaults=defaults,
-            )
-
-        yield path, scen
+            yield path, scen
 
 
-def scenario(dirpath=None, logdir=None, proxyaddr=None, defaults=None):
+def scenario(dirpath=None, logdir=None, proxyaddr=None, autolocalsocks=True,
+             **scenkwargs):
     """Return a single Scenario loaded from `dirpath` if provided else the
     basic default call flow.
     """
     if dirpath:
         # deliver single scenario from dir
-        path, scen = next(walk(dirpath, defaults=defaults))
+        path, scen = next(
+            walk(dirpath, autolocalsocks=autolocalsocks, **scenkwargs)
+        )
     else:
-        # deliver the default scenario bound to loopback sockets
-        uas = agent.server(logdir=logdir)
-        uac = agent.client(logdir=logdir)
+        with plugin.register([netplug] if autolocalsocks else []):
+            # deliver the default scenario bound to loopback sockets
+            uas = agent.server(logdir=logdir)
+            uac = agent.client(logdir=logdir)
 
-        # same as above
-        scen = plugin.mng.hook.pysipp_conf_scen_protocol(
-            agents=[uas, uac], confpy=None, defaults=defaults)
+            # same as above
+            scen = plugin.mng.hook.pysipp_conf_scen_protocol(
+                agents=[uas, uac], confpy=None,
+                scenkwargs=scenkwargs
+            )
 
-        if proxyaddr:
-            scen.clientdefaults.proxyaddr = proxyaddr
+            if proxyaddr:
+                assert isinstance(
+                    proxyaddr, tuple), 'proxyaddr must be a (addr, port) tuple'
+                scen.clientdefaults.proxyaddr = proxyaddr
 
     return scen
 
@@ -118,7 +130,7 @@ def pysipp_load_scendir(path, xmls, confpy):
 
 
 @plugin.hookimpl
-def pysipp_conf_scen_protocol(agents, confpy, defaults):
+def pysipp_conf_scen_protocol(agents, confpy, scenkwargs):
     """Perform default configuration rule set
     """
     # more sanity
@@ -140,7 +152,7 @@ def pysipp_conf_scen_protocol(agents, confpy, defaults):
 
         # create scenario wrapper
         scen = hooks.pysipp_new_scen(
-            agents=agents, confpy=confpy, defaults=defaults)
+            agents=agents, confpy=confpy, scenkwargs=scenkwargs)
 
         # configure scenario
         hooks.pysipp_conf_scen(agents=scen.agents, scen=scen)
@@ -161,20 +173,20 @@ def pysipp_order_agents(agents, clients, servers):
 
 
 @plugin.hookimpl
-def pysipp_new_scen(agents, confpy, defaults):
-    return agent.Scenario(agents, confpy=confpy, defaults=defaults)
+def pysipp_new_scen(agents, confpy, scenkwargs):
+    return agent.Scenario(agents, confpy=confpy, **scenkwargs)
 
 
-@plugin.hookimpl(tryfirst=True)
+@plugin.hookimpl(trylast=True)
 def pysipp_conf_scen(agents, scen):
     """Default validation logic and routing with media
     """
     if scen.servers:
         # point all clients to send requests to 'primary' server agent
-        servers_addr = scen.serverdefaults.get(
-                'srcaddr', ('127.0.0.1', 5060))
-        uas = scen.servers.values()[0]
-        scen.clientdefaults.destaddr = uas.srcaddr or servers_addr
+        # if they aren't already
+        servers_addr = scen.serverdefaults.get('srcaddr', ('127.0.0.1', 5060))
+        uas = scen.prepare_agent(scen.servers.values()[0])
+        scen.clientdefaults.setdefault('destaddr', uas.srcaddr or servers_addr)
 
     elif not scen.clientdefaults.proxyaddr:
         # no servers in scenario so point proxy addr to remote socket addr
@@ -227,7 +239,7 @@ def pysipp_run_protocol(scen, runner, block, timeout, raise_exc):
             block=block, timeout=timeout
         )
     except launch.TimeoutError:  # sucessful timeout
-        cmd2procs = finalize(timeout=0, raise_exc=False)
+        cmds2procs = finalize(timeout=0, raise_exc=False)
         if raise_exc:
             raise
     else:

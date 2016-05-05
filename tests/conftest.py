@@ -27,8 +27,11 @@ def default_agents():
     return uas, uac
 
 
-@pytest.fixture
-def basic_scen():
+@pytest.fixture(
+    params=[True, False],
+    ids=lambda b: "autolocalsocks={}".format(b)
+)
+def basic_scen(request):
     """The most basic scenario instance
     """
-    return scenario()
+    return scenario(autolocalsocks=request.param)

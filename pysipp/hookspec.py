@@ -35,7 +35,7 @@ def pysipp_load_scendir(path, xmls, confpy):
 
 
 @hookspec(firstresult=True)
-def pysipp_conf_scen_protocol(agents, confpy, defaults):
+def pysipp_conf_scen_protocol(agents, confpy, scenkwargs):
     """Performs scenario configuration by making multiple hook calls with
     surrounding logic for determining the sub-registration of of pysipp_conf.py
     modules. A scenario object must be returned.
@@ -49,7 +49,7 @@ def pysipp_order_agents(agents, clients, servers):
 
 
 @hookspec(firstresult=True)
-def pysipp_new_scen(agents, confpy, defaults):
+def pysipp_new_scen(agents, confpy, scenkwargs):
     """Instantiate a scenario object.
     A scenario must adhere to a simple protocol:
         - support a `name` attribute which uniquely identifies the scenario
