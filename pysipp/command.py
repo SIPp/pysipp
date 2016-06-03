@@ -4,7 +4,7 @@ Command string rendering
 import string
 import socket
 from collections import OrderedDict
-import utils
+from . import utils
 
 log = utils.get_logger()
 

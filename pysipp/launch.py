@@ -6,9 +6,9 @@ import os
 import shlex
 import select
 import threading
-import utils
 import signal
 import time
+from . import utils
 from pprint import pformat
 from collections import OrderedDict, namedtuple
 

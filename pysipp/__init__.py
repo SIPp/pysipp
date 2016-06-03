@@ -20,13 +20,9 @@ pysipp - a python wrapper for launching SIPp
 '''
 import sys
 from os.path import dirname
-from load import iter_scen_dirs
-import launch
-import report
-import plugin
-import netplug
-import agent
-from agent import client, server
+from . import launch, report, plugin, netplug, agent
+from .load import iter_scen_dirs
+from .agent import client, server
 
 
 class SIPpFailure(RuntimeError):
