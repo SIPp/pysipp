@@ -126,16 +126,17 @@ def test_scenario():
     scen2 = agent.Scenario(agents)
 
     # verify contained agents
-    assert scen.agents.values() == agents == scen._agents
+    assert list(scen.agents.values()) == agents == scen._agents
     assert scen.prepare() != agents  # new copies
 
     # verify order
-    assert uas is scen.agents.values()[0]
-    assert uac is scen.agents.values()[1]
+    agents = list(scen.agents.values())
+    assert uas is agents[0]
+    assert uac is agents[1]
     # verify servers
-    assert uas is scen.servers.values()[0]
+    assert uas is list(scen.servers.values())[0]
     # verify clients
-    assert uac is scen.clients.values()[0]
+    assert uac is list(scen.clients.values())[0]
 
     # ensure defaults attr setting works
     doggy = 'doggy'

@@ -19,4 +19,4 @@ def test_iter_dirs(scendir):
     for path, xmls, confpy in iter_scen_dirs(scendir):
         expect = paths.get(os.path.basename(path), None)
         if expect:
-            assert map(bool, (xmls, confpy)) == expect
+            assert [bool(xmls), bool(confpy)] == expect
