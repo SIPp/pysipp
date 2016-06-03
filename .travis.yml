@@ -1,0 +1,41 @@
+language: python
+sudo: false
+dist: trusty
+
+cache:
+  - bundler
+  - pip
+
+python:
+  - 2.7
+  - 3.4
+  - 3.5
+  - nightly
+  - pypy
+  - pypy3
+
+addons:
+  apt:
+    packages:
+      - libpcap-dev
+      - libsctp-dev
+      - libncurses5-dev
+      - libssl-dev
+      - libgsl0-dev
+
+install:
+  - pip install -e .
+  - pip install --upgrade pytest
+  - pip list
+
+before_script:
+  - git clone https://github.com/SIPp/sipp.git
+  - cd sipp
+  - autoreconf -vifs
+  - ./configure --with-gsl --with-openssl --with-pcap --with-rtpstream --with-sctp
+  - make -j2
+  - export PATH="$PWD:$PATH"
+  - cd ..
+
+script:
+  - python setup.py pytest
