@@ -126,8 +126,8 @@ class PopenRunner(object):
 
                 # all procs were killed by SIGUSR1
                 raise TimeoutError(
-                    "pids '{}' failed to complete after '{}' seconds"
-                    .format(pformat(signalled.values()), timeout)
+                    "pids '{}' failed to complete after '{}' seconds".format(
+                        pformat([p.pid for p in signalled.values()]), timeout)
                 )
 
         return self._procs
@@ -147,7 +147,7 @@ class PopenRunner(object):
         for cmd, proc in self.iterprocs():
             proc.send_signal(signum)
             log.warn("sent signal '{}' to cmd '{}' with pid '{}'"
-                      .format(signum, cmd, proc.pid))
+                     .format(signum, cmd, proc.pid))
             signalled[cmd] = proc
         return signalled
 
