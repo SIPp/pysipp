@@ -29,7 +29,7 @@ def default_agents():
 
 @pytest.fixture(
     params=[True, False],
-    ids=lambda b: "autolocalsocks={}".format(b)
+    ids="autolocalsocks={}".format
 )
 def basic_scen(request):
     """The most basic scenario instance

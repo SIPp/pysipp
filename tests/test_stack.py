@@ -45,7 +45,7 @@ def test_confpy_hooks(scendir):
     path, scen = list(pysipp.walk(scendir + '/default_with_confpy'))[0]
     assert scen.mod
     # ordering hook should reversed agents
-    agents = scen.agents.values()
+    agents = list(scen.agents.values())
     assert agents[0].is_client()
     assert agents[1].is_server()
     # check that `scen.remote_host = 'doggy'` was applied
@@ -119,7 +119,7 @@ def test_hook_overrides(basic_scen):
 @pytest.mark.parametrize(
     "dictname",
     ['defaults', 'clientdefaults', 'serverdefaults'],
-    ids=lambda d: str(d),
+    ids=str,
 )
 @pytest.mark.parametrize(
     "data",

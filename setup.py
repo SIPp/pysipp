@@ -18,9 +18,11 @@
 #
 # Authors : Tyler Goodlet
 
+import sys
 from setuptools import setup
 
 
+needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
 with open('README.md') as f:
     readme = f.read()
 
@@ -38,9 +40,8 @@ setup(
     platforms=['linux'],
     packages=['pysipp'],
     install_requires=['pluggy==0.3.1'],
-    extras_require={
-        'testing': ['pytest'],
-    },
+    setup_requires=['pytest-runner'] if needs_pytest else [],
+    tests_require=['pytest'],
     # use_2to3 = False
     # zip_safe=True,
     classifiers=[

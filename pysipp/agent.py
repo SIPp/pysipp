@@ -8,9 +8,8 @@ from copy import deepcopy
 from distutils import spawn
 from collections import namedtuple, OrderedDict
 from itertools import repeat
-from . import command, plugin
+from . import command, plugin, utils
 import tempfile
-import utils
 
 log = utils.get_logger()
 

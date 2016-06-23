@@ -5,4 +5,4 @@ def pysipp_conf_scen(agents, scen):
 
 def pysipp_order_agents(agents, clients, servers):
     # should still work due to re-transmissions
-    return reversed(agents.values())
+    return reversed(list(agents.values()))

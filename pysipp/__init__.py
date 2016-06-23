@@ -20,13 +20,9 @@ pysipp - a python wrapper for launching SIPp
 '''
 import sys
 from os.path import dirname
-from load import iter_scen_dirs
-import launch
-import report
-import plugin
-import netplug
-import agent
-from agent import client, server
+from . import launch, report, plugin, netplug, agent
+from .load import iter_scen_dirs
+from .agent import client, server
 
 
 class SIPpFailure(RuntimeError):
@@ -185,7 +181,7 @@ def pysipp_conf_scen(agents, scen):
         # point all clients to send requests to 'primary' server agent
         # if they aren't already
         servers_addr = scen.serverdefaults.get('srcaddr', ('127.0.0.1', 5060))
-        uas = scen.prepare_agent(scen.servers.values()[0])
+        uas = scen.prepare_agent(list(scen.servers.values())[0])
         scen.clientdefaults.setdefault('destaddr', uas.srcaddr or servers_addr)
 
     elif not scen.clientdefaults.proxyaddr:
