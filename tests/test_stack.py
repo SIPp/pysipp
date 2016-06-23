@@ -119,7 +119,7 @@ def test_hook_overrides(basic_scen):
 @pytest.mark.parametrize(
     "dictname",
     ['defaults', 'clientdefaults', 'serverdefaults'],
-    ids=lambda d: str(d),
+    ids=str,
 )
 @pytest.mark.parametrize(
     "data",
