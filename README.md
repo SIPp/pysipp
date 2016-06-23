@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/SIPp/pysipp.svg?branch=master)](https://travis-ci.org/SIPp/pysipp)
 # `pysipp` is for people who hate SIPp
 but (want to) use it for automated testing because it gets the job done...
 
