@@ -3,7 +3,6 @@ pysipp.agent module tests
 '''
 import pytest
 import tempfile
-import os
 import pysipp
 from pysipp import agent, launch, plugin
 
@@ -56,7 +55,7 @@ def test_scen_logdir():
     """Verify log file arguments when logdir is set using Scenario.defaults
     """
     scen = pysipp.scenario()
-    logdir = os.getcwd()
+    logdir = tempfile.mkdtemp(suffix='_pysipp')
     scen.defaults.logdir = logdir
     for ua in scen.prepare():
         check_log_files(ua, logdir)
