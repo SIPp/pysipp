@@ -46,12 +46,22 @@ def emit_logfiles(agents2procs, level='warn', max_lines=100):
     """
     emit = getattr(log, level)
     for ua, proc in agents2procs:
+        i=5
+        while(i>=0):
+            i -= 1
+            if (not hasattr(proc, 'streams')):
+               time.sleep(0.01)
 
-        # print stderr
-        emit("stderr for '{}'\n{}\n".format(ua.name, proc.streams.stderr))
+          # print stderr
+        if (hasattr(proc, 'streams')):
+            emit("stderr for '{}'\n{}\n".format(ua.name, proc.streams.stderr))
         # FIXME: no idea, but some logs are not being printed without this
         # logging mod bug?
-        time.sleep(0.01)
+            time.sleep(0.01)
+        else:
+            (my_stdout, my_stderr) = (proc.communicate())
+            emit("stderr for '{}'\n{}\n".format(ua.name, my_stderr))
+            time.sleep(0.01)
 
         # print log file contents
         for name, fpath in ua.iter_toconsole_items():

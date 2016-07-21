@@ -194,6 +194,7 @@ sipp_spec = [
     # scenario config/ctl
     '-sn {scen_name} ',
     '-sf {scen_file} ',
+    '-oocsf {ooc_scen_file} ',
     '-recv_timeout {recv_timeout} ',
     '-timeout {timeout} ',
     '-d {pause_duration} ',
@@ -209,6 +210,8 @@ sipp_spec = [
     '-l {limit} ',
     '-m {call_count} ',
     '-rp {rate_period} ',
+    '-users {users} ',
+    '-deadcall_wait {deadcall_wait} ',
     # data insertion
     ('-key {key_vals} ', DictField),
     ('-set {global_vars} ', DictField),
@@ -225,6 +228,7 @@ sipp_spec = [
     ('-aa {auto_answer}', BoolField),
     ('-trace_err {trace_error}', BoolField),
     ('-trace_calldebug {trace_calldebug}', BoolField),
+    ('-trace_error_codes {trace_error_codes}', BoolField),
     ('-trace_msg {trace_message}', BoolField),
     ('-trace_logs {trace_log}', BoolField),
     ('-trace_screen {trace_screen}', BoolField),
