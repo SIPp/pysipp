@@ -8,6 +8,7 @@ import select
 import threading
 import signal
 import time
+from datetime import datetime
 from . import utils
 from pprint import pformat
 from collections import OrderedDict, namedtuple
@@ -76,13 +77,13 @@ class PopenRunner(object):
             time.sleep(1. / rate)
 
         # launch waiter
-        self._waiter = threading.Thread(target=self._wait, args=(fds2procs,))
+        self._waiter = threading.Thread(target=self._wait, args=(fds2procs,datetime.now(),))
         self._waiter.daemon = True
         self._waiter.start()
 
         return self.get(**kwargs) if block else self._procs
 
-    def _wait(self, fds2procs):
+    def _wait(self, fds2procs, start_at):
         log.debug("started waiter for procs {}".format(fds2procs))
         signalled = None
         left = len(fds2procs)
@@ -98,6 +99,8 @@ class PopenRunner(object):
                 proc.streams = Streams(*proc.communicate())  # timeout=2))
                 if proc.returncode != 0 and not signalled:
                     # stop all other agents if there is a failure
+                    if ((datetime.now() - start_at).seconds < 2):
+                        time.sleep(1.5)
                     signalled = self.stop()
 
         log.debug("terminating waiter thread")
