@@ -39,7 +39,7 @@ class UserAgent(command.SippCmd):
     configuration options for a SIP UA.
     """
     # we skip `error` since we can get it from stderr
-    _log_types = 'screen calldebug message log'.split()
+    _log_types = 'screen calldebug message log error'.split()
     _to_console = 'screen'
 
     @property
@@ -127,7 +127,7 @@ class UserAgent(command.SippCmd):
             setattr(
                 self, name, path.join(
                     logdir or self.logdir or tempfile.gettempdir(),
-                    "{}_{}".format(self.name, name))
+                    attr or "{}_{}".format(self.name, name))
             )
 
         self.enable_tracing()

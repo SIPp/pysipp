@@ -94,7 +94,7 @@ def scenario(dirpath=None, logdir=None, proxyaddr=None, autolocalsocks=True,
     if dirpath:
         # deliver single scenario from dir
         path, scen = next(
-            walk(dirpath, autolocalsocks=autolocalsocks, **scenkwargs)
+            walk(dirpath, logdir=logdir, autolocalsocks=autolocalsocks, **scenkwargs)
         )
     else:
         with plugin.register([netplug] if autolocalsocks else []):
