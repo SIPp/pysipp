@@ -4,7 +4,6 @@ Basic agent/scenario launching
 from pysipp.agent import client, server
 from pysipp.launch import PopenRunner
 
-
 def run_blocking(*agents):
     runner = PopenRunner()
     assert not runner.is_alive()
@@ -34,7 +33,7 @@ def test_agent_fails():
     # assert not uacproc.streams.stderr  # sometimes this has a log msg?
     ret = uacproc.returncode
     # killed by SIGUSR1 or terminates before it starts (racy)
-    assert ret == -10 or ret == 0
+    assert ret == -10 or ret == 0 or ret == 1
 
 
 def test_default_scen(default_agents):
