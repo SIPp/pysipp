@@ -5,8 +5,6 @@ import pytest
 import pysipp
 import functools
 import os
-import itertools
-import tempfile
 
 
 @pytest.fixture
@@ -60,6 +58,19 @@ def test_sync_run(scenwalk):
     for path, scen in scenwalk():
         runner = scen(timeout=6)
         for cmd, proc in runner.get(timeout=0).items():
+            assert proc.returncode == 0
+
+
+def test_async_run(scenwalk):
+    """Ensure multiple scenarios run to completion in asynchronous mode.
+    """
+    finalizers = []
+    for path, scen in scenwalk():
+        finalizers.append((scen, scen(block=False)))
+
+    # collect all results synchronously
+    for scen, finalizer in finalizers:
+        for cmd, proc in scen.finalize(timeout=6).items():
             assert proc.returncode == 0
 
 
@@ -152,10 +163,3 @@ def test_autonet_overrides(dictname, data):
     for key, val in data.items():
         for ua in agents.values():
             assert getattr(ua, key) == val
-
-
-# def test_async_run(scenwalk):
-#     """Ensure all scenarios in the test run to completion in asynchronous
-#     mode
-#     """
-#     pass

@@ -23,8 +23,8 @@ Python configuring and launching the infamous
   * we believe this is the wrong way to work around the problem of SIPp's shitty XML control language
 
 
-## Usage
-Launching the default uac scenario is a short line:
+## Basic Usage
+Launching the default UAC scenario is a short line:
 
 ```python
 import pysipp
@@ -41,13 +41,13 @@ uas(block=False)  # returns a `pysipp.launch.PopenRunner` instance by default
 uac()  # run client synchronously
 ```
 
-For more complex multi-UA orchestrations we can use
-a `pysipp.scenario`. The scenario from above is the default
-agent configuration:
+## Multiple Agents
+For multi-UA orchestrations we can use a `pysipp.scenario`.
+The scenario from above is the default agent configuration:
 
 ```python
 scen = pysipp.scenario()
-scen()
+scen()  # run uac and uas synchronously to completion
 ```
 
 Say you have a couple SIPp xml scrips and a device you're looking to
@@ -62,20 +62,12 @@ test_scenario/
 ```
 
 If you've configured your DUT to listen for for SIP on `10.10.8.1:5060`
-and route traffic to the destination specified in the SIP `TO:` header
+and route traffic to the destination specified in the SIP `Request-URI` header
 and your local ip address is `10.10.8.8`:
 
 ```python
-scen = pysipp.scenario(scendir='path/to/test_scenario/',
-    proxyaddr=('10.10.8.1', 5060)
-)
-
-# setup local server sockets
-for port, ua in enumerate(scen.servers.values(), 5080):
-    ua.srcaddr = ('10.10.8.8', port)
-
-# point client at first server
-scen.clientdefaults.destaddr = scen.servers.values()[0].srcaddr
+scen = pysipp.scenario(dirpath='path/to/test_scenario/',
+                       proxyaddr=('10.10.8.1', 5060))
 
 # run all agents in sequence starting with servers
 scen()
@@ -86,11 +78,37 @@ them:
 
 ```python
 for path, scen in pysipp.walk('path/to/scendirs/root/'):
-    print("running scenario collected from {}".format(path))
-    # ... steps from above ...
+    print("Running scenario collected from {}".format(path))
     scen()
 ```
 
+## Async Scenario Launching
+You can also launch multiple multi-UA scenarios concurrently using
+non-blocking mode:
+
+```python
+scens = []
+for path, scen in pysipp.walk('path/to/scendirs/root/', proxyaddr=('10.10.8.1', 5060)):
+    print("Running scenario collected from {}".format(path))
+    scen(block=False)
+    scens.append(scen)
+
+# All scenarios should now be running concurrently so we can continue
+# program execution...
+print("Continuing program execution...")
+
+# Wait to collect all the results
+print("Finalizing all scenarios and collecting results")
+for scen in scens:
+  scen.finalize()
+```
+
+`scen.finalize()` actually calls a special cleanup function defined in the
+[`pysipp_run_protocol`](https://github.com/SIPp/pysipp/blob/master/pysipp/__init__.py#L207)
+hook which invokes the internal reporting functions and returns a `dict` of cmd -> process
+items.
+
+## API
 To see the mapping of SIPp command line args to `pysipp.agent.UserAgent`
 attributes, take a look at `pysipp.command.sipp_spec`.
 This should give you an idea of what can be set on each agent.
