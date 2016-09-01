@@ -125,7 +125,7 @@ class UserAgent(command.SippCmd):
         # prefix all log file paths
         for name, attr in self.iter_logfile_items():
             setattr(
-                self, name, path.join(
+                self, name, attr or path.join(
                     logdir or self.logdir or tempfile.gettempdir(),
                     "{}_{}".format(self.name, name))
             )

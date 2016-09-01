@@ -159,5 +159,6 @@ For now see [#4](https://github.com/SIPp/pysipp/issues/4)
 
 More to come...
 - writing plugins
+- using a `pysipp_conf.py`
 - remote execution
 - async mult-scenario load testing
