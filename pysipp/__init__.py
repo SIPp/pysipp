@@ -36,7 +36,7 @@ __author__ = 'Tyler Goodlet (tgoodlet@gmail.com)'
 __all__ = ['walk', 'client', 'server', 'plugin']
 
 
-def walk(rootpath, logdir=None, delay_conf_scen=False, autolocalsocks=True,
+def walk(rootpath, delay_conf_scen=False, autolocalsocks=True,
          **scenkwargs):
     """SIPp scenario generator.
 
@@ -61,10 +61,10 @@ def walk(rootpath, logdir=None, delay_conf_scen=False, autolocalsocks=True,
             agents = []
             for xml in xmls:
                 if 'uac' in xml.lower():
-                    ua = agent.client(scen_file=xml, logdir=logdir)
+                    ua = agent.client(scen_file=xml)
                     agents.append(ua)
                 elif 'uas' in xml.lower():
-                    ua = agent.server(scen_file=xml, logdir=logdir)
+                    ua = agent.server(scen_file=xml)
                     agents.insert(0, ua)  # servers are always launched first
                 else:
                     raise ValueError(
@@ -86,7 +86,7 @@ def walk(rootpath, logdir=None, delay_conf_scen=False, autolocalsocks=True,
             yield path, scen
 
 
-def scenario(dirpath=None, logdir=None, proxyaddr=None, autolocalsocks=True,
+def scenario(dirpath=None, proxyaddr=None, autolocalsocks=True,
              **scenkwargs):
     """Return a single Scenario loaded from `dirpath` if provided else the
     basic default call flow.
@@ -95,13 +95,13 @@ def scenario(dirpath=None, logdir=None, proxyaddr=None, autolocalsocks=True,
         # deliver single scenario from dir
         path, scen = next(
             walk(dirpath, autolocalsocks=autolocalsocks,
-                 logdir=logdir, **scenkwargs)
+                 **scenkwargs)
         )
     else:
         with plugin.register([netplug] if autolocalsocks else []):
             # deliver the default scenario bound to loopback sockets
-            uas = agent.server(logdir=logdir)
-            uac = agent.client(logdir=logdir)
+            uas = agent.server()
+            uac = agent.client()
 
             # same as above
             scen = plugin.mng.hook.pysipp_conf_scen_protocol(
@@ -252,5 +252,5 @@ def pysipp_run_protocol(scen, runner, block, timeout, raise_exc):
     return runner
 
 
-# reg default hook set
+# register the default hook set
 plugin.mng.register(sys.modules[__name__])
