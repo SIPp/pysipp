@@ -4,12 +4,11 @@ Wrappers for user agents which apply sensible cmdline arg defaults
 from os import path
 import re
 import itertools
+import tempfile
 from copy import deepcopy
 from distutils import spawn
 from collections import namedtuple, OrderedDict
-from itertools import repeat
 from . import command, plugin, utils
-import tempfile
 
 log = utils.get_logger()
 
@@ -25,7 +24,7 @@ def tuple_property(attrs):
         return None
 
     def setter(self, pair):
-        for attr, val in zip(attrs, pair or repeat(None)):
+        for attr, val in zip(attrs, pair or itertools.repeat(None)):
             setattr(self, attr, val)
 
     doc = "{} parameters composed as a tuple".format(', '.join(attrs))
@@ -376,7 +375,24 @@ class ScenarioType(object):
             copies.append(self.prepare_agent(agent))
         return copies
 
-    def from_agents(self, agents=None):
+    def from_settings(self, **kwargs):
+        """Create a new scenario from scratch using current settings calling
+        all normal plugin hooks.
+        """
+        from . import scenario
+        scenkwargs = {
+            'dirpath': self.dirpath,
+            'defaults': self._defaults.copy(),
+            'clientdefaults': self._clientdefaults.copy(),
+            'serverdefaults': self._serverdefaults.copy(),
+        }
+        for key, value in kwargs.items():
+            if key in scenkwargs:
+                scenkwargs[key].update(value)
+
+        return scenario(**scenkwargs)
+
+    def from_agents(self, agents=None, autolocalsocks=True, **scenkwargs):
         """Create a new scenario from prepared agents.
         """
         return type(self)(
