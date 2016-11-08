@@ -135,14 +135,14 @@ def test_hook_overrides(basic_scen):
 @pytest.mark.parametrize(
     "data",
     [
-        {'local_host': 'doggy'},
+        {'local_host': '127.0.0.1'},
         {'local_port': 5080},
-        {'local_port': 5080, 'local_host': 'doggy'},
-        {'srcaddr': ('doggy', 5080)},
-        {'media_addr': 'doggy'},
+        {'local_port': 5080, 'local_host': '127.0.0.1'},
+        {'srcaddr': ('127.0.0.1', 5080)},
+        {'media_addr': '127.0.0.1'},
         {'media_port': 5080},
-        {'media_port': 5080, 'media_addr': 'doggy'},
-        {'mediaaddr': ('doggy', 5080)},
+        {'media_port': 5080, 'media_addr': '127.0.0.1'},
+        {'mediaaddr': ('127.0.0.1', 5080)},
     ],
     ids=lambda d: str(d),
 )

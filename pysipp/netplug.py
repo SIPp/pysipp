@@ -35,8 +35,14 @@ def pysipp_conf_scen(agents, scen):
     for ua in scen.agents.values():
         copy = scen.prepare_agent(ua)
 
-        if not copy.local_port and not copy.local_host:
-            ua.srcaddr = getsockaddr(host)
+        if not copy.local_host:
+            ua.local_host = host
 
-            if not copy.media_port and not copy.media_addr:
-                ua.mediaaddr = getsockaddr(host)
+        if not copy.local_port:
+            ua.local_port = getsockaddr(ua.local_host)[1]
+
+        if not copy.media_addr:
+            ua.media_addr = ua.local_host
+
+        if not copy.media_port:
+            ua.media_port = getsockaddr(ua.media_addr)[1]
