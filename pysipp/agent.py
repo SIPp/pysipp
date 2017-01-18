@@ -38,7 +38,8 @@ class UserAgent(command.SippCmd):
     configuration options for a SIP UA.
     """
     # we skip `error` since we can get it from stderr
-    _log_types = 'screen calldebug message log'.split()
+    _log_types = 'screen log'.split()
+    _debug_log_types = 'calldebug message'.split()
     _to_console = 'screen'
 
     @property
@@ -76,8 +77,8 @@ class UserAgent(command.SippCmd):
     def is_server(self):
         return 'uas' in self.name.lower()
 
-    def iter_logfile_items(self):
-        for name in self._log_types:
+    def iter_logfile_items(self, types_attr='_log_types'):
+        for name in getattr(self, types_attr):
             attr_name = name + '_file'
             yield attr_name, getattr(self, attr_name)
 
@@ -117,12 +118,18 @@ class UserAgent(command.SippCmd):
             attr_name = 'trace_' + name
             setattr(self, attr_name, True)
 
-    def enable_logging(self, logdir=None):
+    def enable_logging(self, logdir=None, debug=False):
         """Enable agent logging by appending appropriately named log file
         arguments to the underlying command.
         """
+        logattrs = self.iter_logfile_items()
+        if debug:
+            logattrs = itertools.chain(
+                logattrs,
+                self.iter_logfile_items('_debug_log_types'),
+            )
         # prefix all log file paths
-        for name, attr in self.iter_logfile_items():
+        for name, attr in logattrs:
             setattr(
                 self, name, attr or path.join(
                     logdir or self.logdir or tempfile.gettempdir(),
