@@ -55,6 +55,33 @@ def test_dict_field():
     assert '-key' not in cmd.render()
 
 
+def test_list_field():
+    cmd = SippCmd()
+    assert not isinstance(cmd.info_files, basestring)
+
+    # one entry
+    cmd.info_files = ["100"]
+    assert "-inf '100'" in cmd.render()
+
+    # two entries
+    cmd.info_files = ["100", "200"]
+    assert "-inf '100' -inf '200'" in cmd.render()
+
+    # clear all
+    del cmd.info_files[:]
+    assert '-inf' not in cmd.render()
+
+    # three entries - two via 'info_files' and one via 'info_file'
+    cmd.info_files = ["100", "200"]
+    cmd.info_file = "300"
+    assert "-inf '300' -inf '100' -inf '200'" in cmd.render()
+
+    # clear all
+    cmd.info_file = ""
+    cmd.info_files[:] = []
+    assert '-inf' not in cmd.render()
+
+
 def test_prefix():
     cmd = SippCmd()
     pre = "doggy bath"
