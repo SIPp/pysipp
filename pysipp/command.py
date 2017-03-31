@@ -71,6 +71,16 @@ class DictField(Field):
         )
 
 
+class ListField(Field):
+    _default = []
+
+    def render(self, value):
+        return ''.join(
+            self.fmtstr.format(**{self.name: "'{}'".format(val)})
+            for val in value
+        )
+
+
 def cmdstrtype(spec):
     '''Build a command str renderer from an iterable of format string tokens.
 
@@ -221,6 +231,7 @@ sipp_spec = [
     '-message_file {message_file} ',
     '-log_file {log_file} ',
     '-inf {info_file} ',
+    ('-inf {info_files} ', ListField),
     '-screen_file {screen_file} ',
     # bool flags
     ('-rtp_echo {rtp_echo}', BoolField),
