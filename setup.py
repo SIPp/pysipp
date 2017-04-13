@@ -35,9 +35,14 @@ setup(
     author_email='tgoodlet@gmail.com',
     url='https://github.com/SIPp/pysipp',
     platforms=['linux'],
-    packages=['pysipp'],
+    packages=['pysipp', 'pysipp.cli'],
     install_requires=['pluggy==0.3.1'],
     tests_require=['pytest'],
+    entry_points={
+        'console_scripts': [
+            'sippfmt=pysipp.cli.sippfmt:main'
+        ],
+    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
