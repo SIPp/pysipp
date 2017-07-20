@@ -1,6 +1,6 @@
 language: python
 sudo: false
-dist: trusty
+dist: precise
 
 cache:
   - bundler
@@ -8,11 +8,11 @@ cache:
 
 python:
   - 2.7
-  - 3.4
   - 3.5
+  - 3.6
   - nightly
   - pypy
-  - pypy3
+  # - pypy3
 
 addons:
   apt:
@@ -31,11 +31,9 @@ install:
 before_script:
   - git clone https://github.com/SIPp/sipp.git
   - cd sipp
-  - autoreconf -vifs
-  - ./configure --with-gsl --with-openssl --with-pcap --with-rtpstream --with-sctp
-  - make -j2
+  - ./build.sh
   - export PATH="$PWD:$PATH"
   - cd ..
 
 script:
-  - python setup.py pytest
+  - pytest tests/
