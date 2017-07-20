@@ -17,12 +17,9 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # Authors : Tyler Goodlet
-
-import sys
 from setuptools import setup
 
 
-needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
 with open('README.md') as f:
     readme = f.read()
 
@@ -40,10 +37,7 @@ setup(
     platforms=['linux'],
     packages=['pysipp'],
     install_requires=['pluggy==0.3.1'],
-    setup_requires=['pytest-runner'] if needs_pytest else [],
     tests_require=['pytest'],
-    # use_2to3 = False
-    # zip_safe=True,
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',

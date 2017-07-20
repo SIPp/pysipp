@@ -57,7 +57,7 @@ def test_dict_field():
 
 def test_list_field():
     cmd = SippCmd()
-    assert not isinstance(cmd.info_files, basestring)
+    assert cmd.info_files is None
 
     # one entry
     cmd.info_files = ["100"]

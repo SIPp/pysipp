@@ -217,7 +217,7 @@ def pysipp_run_protocol(scen, runner, block, timeout, raise_exc):
         and perform error and logfile reporting.
         """
         cmds2procs = cmds2procs or runner.get(timeout=timeout)
-        agents2procs = zip(agents, cmds2procs.values())
+        agents2procs = list(zip(agents, cmds2procs.values()))
         msg = report.err_summary(agents2procs)
         if msg:
             # report logs and stderr
