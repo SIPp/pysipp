@@ -47,9 +47,11 @@ def emit_logfiles(agents2procs, level='warn', max_lines=100):
     emit = getattr(log, level)
     for ua, proc in agents2procs:
 
-        # print stderr
-        emit("stderr for '{}' @ {}\n{}\n".format(
-            ua.name, ua.srcaddr, proc.streams.stderr))
+        # log stderr
+        stderr = proc.streams.stderr  # bytes in py3
+        stderr = stderr.decode() if isinstance(stderr, bytes) else stderr
+        emit("stderr for '{}' @ {}\n{}\n".format(ua.name, ua.srcaddr, stderr))
+
         # FIXME: no idea, but some logs are not being printed without this
         # logging mod bug?
         time.sleep(0.01)
