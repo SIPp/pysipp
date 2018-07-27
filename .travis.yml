@@ -31,7 +31,7 @@ install:
 before_script:
   - git clone https://github.com/SIPp/sipp.git
   - cd sipp
-  - ./build.sh
+  - ./build.sh --full
   - export PATH="$PWD:$PATH"
   - cd ..
 
