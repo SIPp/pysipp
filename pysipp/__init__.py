@@ -109,10 +109,10 @@ def scenario(dirpath=None, proxyaddr=None, autolocalsocks=True,
                 scenkwargs=scenkwargs
             )
 
-            if proxyaddr:
-                assert isinstance(
-                    proxyaddr, tuple), 'proxyaddr must be a (addr, port) tuple'
-                scen.clientdefaults.proxyaddr = proxyaddr
+    if proxyaddr:
+        assert isinstance(
+            proxyaddr, tuple), 'proxyaddr must be a (addr, port) tuple'
+        scen.clientdefaults.proxyaddr = proxyaddr
 
     return scen
 
