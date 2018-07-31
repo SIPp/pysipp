@@ -235,7 +235,7 @@ class ScenarioType(object):
     """
 
     def __init__(self, agents, defaults, clientdefaults=None,
-                 serverdefaults=None, confpy=None, enable_screen_file=True):
+                 serverdefaults=None, confpy=None, logs=True, enable_screen_file=True):
         # agents iterable in launch-order
         self._agents = agents
         ua_attrs = UserAgent.keys()
@@ -255,6 +255,7 @@ class ScenarioType(object):
         # hook module
         self.mod = confpy
         self.enable_screen_file = enable_screen_file
+        self.logs = logs
 
     @property
     def agents(self):
@@ -369,6 +370,8 @@ class ScenarioType(object):
         ua = UserAgent(defaults=params)
 
         ua.enable_logging(enable_screen_file=self.enable_screen_file)
+        if self.logs:
+            ua.enable_logging()
 
         # call post defaults hook
         plugin.mng.hook.pysipp_post_ua_defaults(ua=ua)
