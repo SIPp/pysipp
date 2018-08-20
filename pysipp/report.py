@@ -54,6 +54,13 @@ def emit_logfiles(agents2procs, level='warn', max_lines=100):
         # logging mod bug?
         time.sleep(0.01)
 
+        # print stdout
+        emit("stdout for '{}' @ {}\n{}\n".format(
+            ua.name, ua.srcaddr, proc.streams.stdout))
+        # FIXME: no idea, but some logs are not being printed without this
+        # logging mod bug?
+        time.sleep(0.01)
+
         # print log file contents
         for name, fpath in ua.iter_toconsole_items():
             if fpath and path.isfile(fpath):

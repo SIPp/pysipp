@@ -28,11 +28,12 @@ class PopenRunner(object):
 
     Adheres to an interface similar to `multiprocessing.pool.AsyncResult`.
     """
+
     def __init__(
-        self,
-        subprocmod=subprocess,
-        osmod=os,
-        poller=select.epoll,
+            self,
+            subprocmod=subprocess,
+            osmod=os,
+            poller=select.epoll,
     ):
         # these could optionally be rpyc proxy objs
         self.spm = subprocmod
@@ -53,8 +54,6 @@ class PopenRunner(object):
                 "Process results have not been cleared from previous run"
             )
         sp = self.spm
-        os = self.osm
-        DEVNULL = open(os.devnull, 'wb')
         fds2procs = OrderedDict()
 
         # run agent commands in sequence
@@ -63,15 +62,15 @@ class PopenRunner(object):
                 "launching cmd:\n\"{}\"\n".format(cmd))
             proc = sp.Popen(
                 shlex.split(cmd),
-                stdout=DEVNULL,
-                stderr=sp.PIPE
+                stdout=sp.PIPE,
+                stderr=sp.STDOUT
             )
-            fd = proc.stderr.fileno()
+            fd = proc.stdout.fileno()
             log.debug("registering fd '{}' for pid '{}'".format(
                 fd, proc.pid))
             fds2procs[fd] = self._procs[cmd] = proc
             # register for stderr hangup events
-            self.poller.register(proc.stderr.fileno(), select.EPOLLHUP)
+            self.poller.register(proc.stdout.fileno(), select.EPOLLHUP)
             # limit launch rate
             time.sleep(1. / rate)
 
