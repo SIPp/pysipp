@@ -26,7 +26,7 @@ with open('README.md') as f:
 
 setup(
     name="pysipp",
-    version='0.1.alpha',
+    version='0.1.beta',
     description='pysipp is a SIPp scenario launcher for for use in'
                 ' automated VoIP testing',
     long_description=readme,
@@ -44,7 +44,7 @@ setup(
         ],
     },
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v2',
         'Operating System :: Linux',
