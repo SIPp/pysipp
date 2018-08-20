@@ -1,6 +1,4 @@
 language: python
-sudo: false
-dist: precise
 
 cache:
   - bundler
@@ -29,9 +27,11 @@ install:
   - pip list
 
 before_script:
-  - git clone https://github.com/SIPp/sipp.git
-  - cd sipp
-  - ./build.sh --full
+  - wget https://github.com/SIPp/sipp/releases/download/v3.5.2/sipp-3.5.2.tar.gz
+  - tar -xvzf sipp-3.5.2.tar.gz
+  - cd sipp-3.5.2
+  - ./configure
+  - make
   - export PATH="$PWD:$PATH"
   - cd ..
 
