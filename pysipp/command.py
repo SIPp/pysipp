@@ -188,8 +188,6 @@ sipp_spec = [
     # contact info
     '{prefix} ',
     '{bin_path} ',
-    ('{remote_host}', AddrField),  # NOTE: no space
-    ':{remote_port} ',
     ('-i {local_host} ', AddrField),
     '-p {local_port} ',
     '-s {uri_username} ',
@@ -244,6 +242,8 @@ sipp_spec = [
     ('-trace_logs {trace_log}', BoolField),
     ('-trace_screen {trace_screen}', BoolField),
     ('-error_overwrite {error_overwrite}', BoolField),
+    ('{remote_host}', AddrField),  # NOTE: no space
+    ':{remote_port}',
 ]
 
 
