@@ -10,12 +10,12 @@ def getsockaddr(host, family=socket.AF_INET, port=0, sockmod=socket):
     binding to an ip, acquiring a random port and then
     closing the socket and returning that address.
 
-    ..warning:: Obviously this is not guarateed to be an unused address
+    ..warning:: Obviously this is not guaranteed to be an unused address
         since we don't actually keep it bound, so there may be a race with
         other processes acquiring the addr before our SIPp process re-binds.
     """
     for fam, stype, proto, _, sa in socket.getaddrinfo(
-        host, port, family, socket.SOCK_DGRAM, 0, socket.AI_PASSIVE,
+            host if host else '127.0.0.1', port, family, socket.SOCK_DGRAM, 0, socket.AI_PASSIVE,
     ):
         s = socket.socket(family, stype, proto)
         s.bind(sa)
