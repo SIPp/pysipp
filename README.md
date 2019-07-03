@@ -41,6 +41,15 @@ uas(block=False)  # returns a `pysipp.launch.PopenRunner` instance by default
 uac()  # run client synchronously
 ```
 
+## Authentication
+When using the `[authentication]` (sipp keyword)[https://sipp.readthedocs.io/en/latest/scenarios/keywords.html#authentication]
+in scenarios, providing the credentials can be done with the
+`auth_username` and `auth_password` arguments, for example:
+
+```python
+pysipp.client(auth_username='sipp', auth_password='sipp-pass')
+```
+
 ## Multiple Agents
 For multi-UA orchestrations we can use a `pysipp.scenario`.
 The scenario from above is the default agent configuration:
