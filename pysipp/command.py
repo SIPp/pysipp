@@ -212,6 +212,7 @@ sipp_spec = [
     # SIP vars
     '-cid_str {cid_str} ',
     '-base_cseq {base_cseq} ',
+    '-au {auth_username} ',
     '-ap {auth_password} ',
     # load settings
     '-r {rate} ',
