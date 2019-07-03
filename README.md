@@ -42,7 +42,7 @@ uac()  # run client synchronously
 ```
 
 ## Authentication
-When using the `[authentication]` (sipp keyword)[https://sipp.readthedocs.io/en/latest/scenarios/keywords.html#authentication]
+When using the `[authentication]` [sipp keyword](https://sipp.readthedocs.io/en/latest/scenarios/keywords.html#authentication)
 in scenarios, providing the credentials can be done with the
 `auth_username` and `auth_password` arguments, for example:
 
