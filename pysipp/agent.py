@@ -362,10 +362,10 @@ class ScenarioType(object):
         # apply defaults
         ordered = [self._defaults, secondary, agent.todict()]
         for name, defs in zip(['defaults', dname, 'agent.todict()'], ordered):
-            log.debug("'{}' contents:\n{}".format(name, defs))
+            log.debug("{} '{}' contents:\n{}".format(agent.name, name, defs))
 
         params = merge(ordered)
-        log.debug("merged contents:\n{}".format(params))
+        log.debug("{} merged contents:\n{}".format(agent.name, params))
         ua = UserAgent(defaults=params)
 
         ua.enable_logging(enable_screen_file=self.enable_screen_file)

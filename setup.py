@@ -36,7 +36,7 @@ setup(
     url='https://github.com/SIPp/pysipp',
     platforms=['linux'],
     packages=['pysipp', 'pysipp.cli'],
-    install_requires=['pluggy==0.3.1'],
+    install_requires=['pluggy==0.11.0'],
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
