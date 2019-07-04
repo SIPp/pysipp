@@ -20,7 +20,8 @@ Python configuring and launching the infamous
 ## It doesn't try to
 
 - Auto-generate SIPp XML scripts like [sippy_cup](https://github.com/mojolingo/sippy_cup)
-  * we believe this is the wrong way to work around the problem of SIPp's shitty XML control language
+  * `pysipp` in no way tries to work around the problem of SIPp's awful
+    XML control language; your current scenario scripts are compatible!
 
 
 ## Basic Usage
@@ -175,7 +176,8 @@ pysipp.utils.log_to_stderr("DEBUG")
 ### Applying default settings
 For now see [#4](https://github.com/SIPp/pysipp/issues/4)
 
-More to come...
+## More to come?
+- document attributes / flags
 - writing plugins
 - using a `pysipp_conf.py`
 - remote execution
