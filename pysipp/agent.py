@@ -24,8 +24,11 @@ def tuple_property(attrs):
 
     def setter(self, pair):
         if not isinstance(pair, tuple):
-            raise ValueError("{} must be a tuple".format(pair))
-        for attr, val in zip(attrs, pair or itertools.repeat(None)):
+            if pair is None:
+                pair = (None, None)
+            else:
+                raise ValueError("{} must be a tuple".format(pair))
+        for attr, val in zip(attrs, pair):
             setattr(self, attr, val)
 
     doc = "{} parameters composed as a tuple".format(', '.join(attrs))
@@ -232,6 +235,12 @@ def Scenario(agents, **kwargs):
     for key, val in kwargs.copy().items():
         if key in _defs:
             _defs[key] = kwargs.pop(key)
+
+    # if a `defaults` kwarg is passed in by the user override template values with
+    # values from that as well
+    user_defaults = kwargs.pop('defaults', None)
+    if user_defaults:
+        _defs.update(user_defaults)
 
     # this gives us scen.<param> attribute access to scen.defaults
     utils.DictProxy(_defs, UserAgent.keys(), cls=scentype)
