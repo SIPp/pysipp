@@ -26,7 +26,7 @@ with open('README.md') as f:
 
 setup(
     name="pysipp",
-    version='0.1.alpha',
+    version='0.1.0',
     description='pysipp is a SIPp scenario launcher for for use in'
                 ' automated VoIP testing',
     long_description=readme,
@@ -36,7 +36,7 @@ setup(
     url='https://github.com/SIPp/pysipp',
     platforms=['linux'],
     packages=['pysipp', 'pysipp.cli'],
-    install_requires=['pluggy==0.11.0'],
+    install_requires=['pluggy>=0.11.0'],
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
