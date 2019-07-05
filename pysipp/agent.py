@@ -23,6 +23,7 @@ def tuple_property(attrs):
         return None
 
     def setter(self, pair):
+
         if not isinstance(pair, tuple):
             if pair is None:
                 pair = (None, None)
