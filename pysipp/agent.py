@@ -76,7 +76,9 @@ class UserAgent(command.SippCmd):
     def is_server(self):
         return 'uas' in self.name.lower()
 
-    def iter_logfile_items(self, types_attr='_log_types', enable_screen_file=True):
+    def iter_logfile_items(
+        self, types_attr='_log_types', enable_screen_file=True
+    ):
         for name in getattr(self, types_attr):
             if name != 'screen' or enable_screen_file:
                 attr_name = name + '_file'
@@ -118,11 +120,14 @@ class UserAgent(command.SippCmd):
             attr_name = 'trace_' + name
             setattr(self, attr_name, True)
 
-    def enable_logging(self, logdir=None, debug=False, enable_screen_file=True):
+    def enable_logging(
+        self, logdir=None, debug=False, enable_screen_file=True
+    ):
         """Enable agent logging by appending appropriately named log file
         arguments to the underlying command.
         """
-        logattrs = self.iter_logfile_items(enable_screen_file=enable_screen_file)
+        logattrs = self.iter_logfile_items(
+            enable_screen_file=enable_screen_file)
         if debug:
             logattrs = itertools.chain(
                 logattrs,
@@ -196,21 +201,22 @@ def client(**kwargs):
     return ua(**defaults)
 
 
-_dd = {
+# default values every scenario should define at a minimum
+_minimum_defaults_template = {
     'key_vals': {},
     'global_vars': {},
 }
-_defaults = {
+_scen_defaults_template = {
     'recv_timeout': 5000,
     'call_count': 1,
     'rate': 1,
     'limit': 1,
     'logdir': tempfile.gettempdir(),
 }
-_defaults.update(deepcopy(_dd))
+_scen_defaults_template.update(deepcopy(_minimum_defaults_template))
 
 
-def Scenario(agents, defaults=None, **kwargs):
+def Scenario(agents, **kwargs):
     """Wraps (subsets of) user agents in global state pertaining to configuration,
     routing, and default arguments.
 
@@ -218,9 +224,12 @@ def Scenario(agents, defaults=None, **kwargs):
     """
     scentype = type('Scenario', (ScenarioType,), {})
 
-    _defs = OrderedDict(deepcopy(_defaults))
-    if defaults:
-        _defs.update(defaults)
+    _defs = OrderedDict(deepcopy(_scen_defaults_template))
+    # for any passed kwargs that have keys in ``_defaults_template``, set them
+    # as the new defaults for the scenario
+    for key, val in kwargs.copy().items():
+        if key in _defs:
+            _defs[key] = kwargs.pop(key)
 
     # this gives us scen.<param> attribute access to scen.defaults
     utils.DictProxy(_defs, UserAgent.keys(), cls=scentype)
@@ -245,11 +254,13 @@ class ScenarioType(object):
         self.defaults = utils.DictProxy(self._defaults, ua_attrs)()
 
         # client settings
-        self._clientdefaults = OrderedDict(clientdefaults or deepcopy(_dd))
+        self._clientdefaults = OrderedDict(
+            clientdefaults or deepcopy(_minimum_defaults_template))
         self.clientdefaults = utils.DictProxy(self._clientdefaults, ua_attrs)()
 
         # server settings
-        self._serverdefaults = OrderedDict(serverdefaults or deepcopy(_dd))
+        self._serverdefaults = OrderedDict(
+            serverdefaults or deepcopy(_minimum_defaults_template))
         self.serverdefaults = utils.DictProxy(self._serverdefaults, ua_attrs)()
 
         # hook module
