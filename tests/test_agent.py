@@ -186,3 +186,8 @@ def test_scenario():
     assert uac.uri_username != doggy
 
     assert scen.name == 'uas_uac'
+
+
+def test_pass_bad_socket_addr():
+    with pytest.raises(ValueError):
+        pysipp.client(proxyaddr='10.10.8.88')
