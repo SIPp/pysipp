@@ -23,6 +23,8 @@ def tuple_property(attrs):
         return None
 
     def setter(self, pair):
+        if not isinstance(pair, tuple):
+            raise ValueError("{} must be a tuple".format(pair))
         for attr, val in zip(attrs, pair or itertools.repeat(None)):
             setattr(self, attr, val)
 
