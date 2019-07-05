@@ -28,9 +28,9 @@ install:
   - pip list
 
 before_script:
-  - wget https://github.com/SIPp/sipp/releases/download/v3.5.2/sipp-3.5.2.tar.gz
-  - tar -xvzf sipp-3.5.2.tar.gz
-  - cd sipp-3.5.2
+  - wget https://github.com/SIPp/sipp/releases/download/v3.6.0/sipp-3.6.0.tar.gz
+  - tar -xvzf sipp-3.6.0.tar.gz
+  - cd sipp-3.6.0
   - ./configure
   - make
   - export PATH="$PWD:$PATH"
