@@ -28,8 +28,8 @@ def getsockaddr(host, family=socket.AF_INET, port=0, sockmod=socket):
 
 @plugin.hookimpl
 def pysipp_conf_scen(agents, scen):
-    """Allocate a random socket addresses from the local OS for
-    each agent in the scenario.
+    """Automatically allocate random socket addresses from the local OS for
+    each agent in the scenario if not previously set by the user.
     """
     host = scen.defaults.local_host or socket.getfqdn()
     for ua in scen.agents.values():
