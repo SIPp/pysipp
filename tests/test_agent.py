@@ -51,12 +51,38 @@ def test_logdir(funcname):
     check_log_files(ua, tempfile.gettempdir())
 
 
-def test_scen_logdir():
+def test_scen_assign_logdir():
     """Verify log file arguments when logdir is set using Scenario.defaults
     """
     scen = pysipp.scenario()
     logdir = tempfile.mkdtemp(suffix='_pysipp')
     scen.defaults.logdir = logdir
+    for ua in scen.prepare():
+        check_log_files(ua, logdir)
+
+
+def test_scen_pass_logdir():
+    """Verify log file arguments when logdir is set using Scenario.defaults
+    """
+    logdir = tempfile.mkdtemp(suffix='_pysipp')
+    scen = pysipp.scenario(logdir=logdir)
+    assert scen.defaults.logdir == logdir
+
+    # logdir isn't set until the scenario is "prepared"
+    assert scen.agents['uac'].logdir is None
+
+    # logdir is set once scenario is "rendered"
+    for ua in scen.prepare():
+        check_log_files(ua, logdir)
+
+
+def test_walk_pass_logdir():
+    logdir = tempfile.mkdtemp(suffix='_pysipp')
+    scen = next(pysipp.walk(
+        './tests/scens/default/', logdir=logdir))[1]
+    assert scen.logdir == logdir
+
+    # logdir is set once scenario is "rendered"
     for ua in scen.prepare():
         check_log_files(ua, logdir)
 
