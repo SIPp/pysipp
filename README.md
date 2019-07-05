@@ -20,7 +20,8 @@ Python configuring and launching the infamous
 ## It doesn't try to
 
 - Auto-generate SIPp XML scripts like [sippy_cup](https://github.com/mojolingo/sippy_cup)
-  * we believe this is the wrong way to work around the problem of SIPp's shitty XML control language
+  * `pysipp` in no way tries to work around the problem of SIPp's awful
+    XML control language; your current scenario scripts are compatible!
 
 
 ## Basic Usage
@@ -39,6 +40,15 @@ uac = pysipp.client(destaddr=uas.srcaddr)
 # run server async
 uas(block=False)  # returns a `pysipp.launch.PopenRunner` instance by default
 uac()  # run client synchronously
+```
+
+## Authentication
+When using the `[authentication]` [sipp keyword](https://sipp.readthedocs.io/en/latest/scenarios/keywords.html#authentication)
+in scenarios, providing the credentials can be done with the
+`auth_username` and `auth_password` arguments, for example:
+
+```python
+pysipp.client(auth_username='sipp', auth_password='sipp-pass')
 ```
 
 ## Multiple Agents
@@ -71,6 +81,15 @@ scen = pysipp.scenario(dirpath='path/to/test_scenario/',
 
 # run all agents in sequence starting with servers
 scen()
+```
+
+**pysipp** by default uses `-screen_file` SIPp argument to redirect output,
+ but this argument is only available in SIPp version >= [3.5.0](https://sourceforge.net/p/sipp/mailman/message/34041962/),
+ for lower versions to run properly, this argument must be
+  disable setting `enable_screen_file` to `False`:
+ 
+```python
+scen = pysipp.scenario(enable_screen_file=False)
 ```
 
 If you've got multiple such scenario directories you can iterate over
@@ -157,7 +176,8 @@ pysipp.utils.log_to_stderr("DEBUG")
 ### Applying default settings
 For now see [#4](https://github.com/SIPp/pysipp/issues/4)
 
-More to come...
+## More to come?
+- document attributes / flags
 - writing plugins
 - using a `pysipp_conf.py`
 - remote execution

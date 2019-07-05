@@ -52,6 +52,25 @@ def test_confpy_hooks(scendir):
         assert agent.uri_username == 'doggy'
 
 
+def test_proxyaddr_with_scendir(scendir):
+    """When building a scenario from a xml file directory the
+    `proxyaddr` kwarg should be assigned.
+    """
+    remoteaddr = ('9.9.9.9', 80)
+    scen = pysipp.scenario(
+        dirpath=scendir + '/default_with_confpy',
+        proxyaddr=remoteaddr
+    )
+
+    assert scen.clientdefaults.proxyaddr == remoteaddr
+    for name, cmd in scen.cmditems():
+        if name == 'uac':
+            assert "-rsa '{}':'{}'".format(*remoteaddr) in cmd
+            assert "'{}':'{}'".format(*scen.clientdefaults.destaddr) in cmd
+        elif name == 'uas':
+            assert "-rsa '{}':'{}'".format(*remoteaddr) not in cmd
+
+
 def test_sync_run(scenwalk):
     """Ensure all scenarios in the test run to completion in synchronous mode
     """

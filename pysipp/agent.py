@@ -16,7 +16,6 @@ SocketAddr = namedtuple('SocketAddr', 'ip port')
 
 
 def tuple_property(attrs):
-
     def getter(self):
         tup = tuple(getattr(self, attr) for attr in attrs)
         if all(tup):
@@ -77,10 +76,11 @@ class UserAgent(command.SippCmd):
     def is_server(self):
         return 'uas' in self.name.lower()
 
-    def iter_logfile_items(self, types_attr='_log_types'):
+    def iter_logfile_items(self, types_attr='_log_types', enable_screen_file=True):
         for name in getattr(self, types_attr):
-            attr_name = name + '_file'
-            yield attr_name, getattr(self, attr_name)
+            if name != 'screen' or enable_screen_file:
+                attr_name = name + '_file'
+                yield attr_name, getattr(self, attr_name)
 
     def iter_toconsole_items(self):
         yield 'screen_file', self.screen_file
@@ -118,11 +118,11 @@ class UserAgent(command.SippCmd):
             attr_name = 'trace_' + name
             setattr(self, attr_name, True)
 
-    def enable_logging(self, logdir=None, debug=False):
+    def enable_logging(self, logdir=None, debug=False, enable_screen_file=True):
         """Enable agent logging by appending appropriately named log file
         arguments to the underlying command.
         """
-        logattrs = self.iter_logfile_items()
+        logattrs = self.iter_logfile_items(enable_screen_file=enable_screen_file)
         if debug:
             logattrs = itertools.chain(
                 logattrs,
@@ -233,8 +233,9 @@ class ScenarioType(object):
 
     If called it will invoke the standard run hooks.
     """
+
     def __init__(self, agents, defaults, clientdefaults=None,
-                 serverdefaults=None, confpy=None):
+                 serverdefaults=None, confpy=None, logs=True, enable_screen_file=True):
         # agents iterable in launch-order
         self._agents = agents
         ua_attrs = UserAgent.keys()
@@ -253,6 +254,8 @@ class ScenarioType(object):
 
         # hook module
         self.mod = confpy
+        self.enable_screen_file = enable_screen_file
+        self.logs = logs
 
     @property
     def agents(self):
@@ -330,6 +333,7 @@ class ScenarioType(object):
         """Return a new agent with all default settings applied from this
         scenario
         """
+
         def merge(dicts):
             """Merge dicts without clobbering up to 1 level deep's worth of
             sub-dicts
@@ -359,12 +363,15 @@ class ScenarioType(object):
         # apply defaults
         ordered = [self._defaults, secondary, agent.todict()]
         for name, defs in zip(['defaults', dname, 'agent.todict()'], ordered):
-            log.debug("'{}' contents:\n{}".format(name, defs))
+            log.debug("{} '{}' contents:\n{}".format(agent.name, name, defs))
 
         params = merge(ordered)
-        log.debug("merged contents:\n{}".format(params))
+        log.debug("{} merged contents:\n{}".format(agent.name, params))
         ua = UserAgent(defaults=params)
-        ua.enable_logging()
+
+        ua.enable_logging(enable_screen_file=self.enable_screen_file)
+        if self.logs:
+            ua.enable_logging()
 
         # call post defaults hook
         plugin.mng.hook.pysipp_post_ua_defaults(ua=ua)
