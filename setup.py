@@ -27,12 +27,12 @@ with open('README.md') as f:
 setup(
     name="pysipp",
     version='0.1.0',
-    description='pysipp is a SIPp scenario launcher for for use in'
-                ' automated VoIP testing',
+    description="A SIPp scenario launcher",
     long_description=readme,
+    long_description_content_type="text/markdown",
     license='GPLv2',
     author='Tyler Goodlet',
-    author_email='tgoodlet@gmail.com',
+    author_email='jgbt@protonmail.com',
     url='https://github.com/SIPp/pysipp',
     platforms=['linux'],
     packages=['pysipp', 'pysipp.cli'],
@@ -46,8 +46,8 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU General Public License v2',
-        'Operating System :: Linux',
+        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
+        'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 2.7',
         'Topic :: Software Development',
         'Topic :: Software Development :: Testing',
