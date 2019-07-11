@@ -77,7 +77,7 @@ def test_sync_run(scenwalk):
     synchronous mode"""
     for path, scen in scenwalk():
         runner = scen(timeout=6)
-        for cmd, proc in runner.get(timeout=0).items():
+        for cmd, proc in runner._procs.items():
             assert proc.returncode == 0
 
 

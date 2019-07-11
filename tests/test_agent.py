@@ -124,9 +124,16 @@ def test_server():
 )
 def test_failures(ua, retcode, kwargs, exc):
     """Test failure cases for all types of agents"""
+    runner = launch.TrioRunner()
+
     # run it without raising
-    runner = ua(raise_exc=False, **kwargs)
-    cmds2procs = runner.get(timeout=0)
+    if exc:
+        with pytest.raises(exc):
+            ua(runner=runner, **kwargs)
+
+    # runner = ua(raise_exc=False, **kwargs)
+
+    cmds2procs = runner._procs
     assert not runner.is_alive()
     assert len(list(runner.iterprocs())) == 0
     # tests transparency of the defaults config pipeline
