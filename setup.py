@@ -26,7 +26,7 @@ with open('README.md') as f:
 
 setup(
     name="pysipp",
-    version='0.1.0',
+    version='1.0.0.dev',
     description="A SIPp scenario launcher",
     long_description=readme,
     long_description_content_type="text/markdown",
@@ -36,7 +36,10 @@ setup(
     url='https://github.com/SIPp/pysipp',
     platforms=['linux'],
     packages=['pysipp', 'pysipp.cli'],
-    install_requires=['pluggy>=0.11.0'],
+    install_requires=[
+        'pluggy >= 0.11.0',
+        'trio>=0.11.0'
+    ],
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
@@ -48,7 +51,7 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
         'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Software Development',
         'Topic :: Software Development :: Testing',
         'Topic :: Software Development :: Quality Assurance',
