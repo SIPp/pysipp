@@ -20,14 +20,9 @@ pysipp - a python wrapper for launching SIPp
 '''
 import sys
 from os.path import dirname
-from . import launch, report, plugin, netplug, agent
+from . import plugin, netplug, agent
 from .load import iter_scen_dirs
 from .agent import client, server
-
-
-class SIPpFailure(RuntimeError):
-    """SIPp commands failed
-    """
 
 
 __package__ = 'pysipp'
@@ -106,12 +101,11 @@ def scenario(dirpath=None, proxyaddr=None, autolocalsocks=True,
             # same as above
             scen = plugin.mng.hook.pysipp_conf_scen_protocol(
                 agents=[uas, uac], confpy=None,
-                scenkwargs=scenkwargs
             )
 
-    if proxyaddr:
-        assert isinstance(
-            proxyaddr, tuple), 'proxyaddr must be a (addr, port) tuple'
+    if proxyaddr is not None:
+        assert isinstance(proxyaddr, tuple), (
+            'proxyaddr must be a (addr, port) tuple')
         scen.clientdefaults.proxyaddr = proxyaddr
 
     return scen
@@ -194,62 +188,6 @@ def pysipp_conf_scen(agents, scen):
         for ua in scen.agents.values():
             if not ua.plays_media:
                 ua.rtp_echo = True
-
-
-@plugin.hookimpl
-def pysipp_new_runner():
-    """Provision and assign a default cmd runner
-    """
-    return launch.PopenRunner()
-
-
-@plugin.hookimpl
-def pysipp_run_protocol(scen, runner, block, timeout, raise_exc):
-    """"Run all rendered commands with the provided runner or the built-in
-    PopenRunner which runs commands locally.
-    """
-    # use provided runner or default provided by hook
-    runner = runner or plugin.mng.hook.pysipp_new_runner()
-    agents = scen.prepare()
-
-    def finalize(cmds2procs=None, timeout=180, raise_exc=True):
-        """Wait for all remaining agents in the scenario to finish executing
-        and perform error and logfile reporting.
-        """
-        cmds2procs = cmds2procs or runner.get(timeout=timeout)
-        agents2procs = list(zip(agents, cmds2procs.values()))
-        msg = report.err_summary(agents2procs)
-        if msg:
-            # report logs and stderr
-            report.emit_logfiles(agents2procs)
-            if raise_exc:
-                # raise RuntimeError on agent failure(s)
-                # (HINT: to rerun type `scen()` from the debugger)
-                raise SIPpFailure(msg)
-
-        return cmds2procs
-
-    try:
-        # run all agents (raises RuntimeError on timeout)
-        cmds2procs = runner(
-            (ua.render() for ua in agents),
-            block=block, timeout=timeout
-        )
-    except launch.TimeoutError:  # sucessful timeout
-        cmds2procs = finalize(timeout=0, raise_exc=False)
-        if raise_exc:
-            raise
-    else:
-        # async
-        if not block:
-            # XXX async run must bundle up results for later processing
-            scen.finalize = finalize
-            return finalize
-
-        # sync
-        finalize(cmds2procs, raise_exc=raise_exc)
-
-    return runner
 
 
 # register the default hook set

@@ -5,10 +5,14 @@ from os import path
 import re
 import itertools
 import tempfile
+from functools import partial
 from copy import deepcopy
 from distutils import spawn
 from collections import namedtuple, OrderedDict
-from . import command, plugin, utils
+
+import trio
+
+from . import command, plugin, utils, launch, report
 
 log = utils.get_logger()
 
@@ -61,20 +65,21 @@ class UserAgent(command.SippCmd):
     ipcaddr = tuple_property(('ipc_host', 'ipc_port'))
     call_load = tuple_property(('rate', 'limit', 'call_count'))
 
-    def __call__(self, block=True, timeout=180, runner=None, raise_exc=True,
-                 **kwargs):
+
+    def __call__(self, *args, **kwargs):
+        return self.run(*args, **kwargs)
+
+    def run(
+        self,
+        timeout=180,
+        **kwargs
+    ):
 
         # create and configure a temp scenario
         scen = plugin.mng.hook.pysipp_conf_scen_protocol(
             agents=[self], confpy=None, scenkwargs={},
         )
-        # run the standard protocol
-        # (attach allocted runner for reuse/post-portem)
-        return plugin.mng.hook.pysipp_run_protocol(
-            scen=scen, block=block, timeout=timeout,
-            runner=runner,
-            raise_exc=raise_exc, **kwargs
-        )
+        return scen.run(timeout=timeout, **kwargs)
 
     def is_client(self):
         return 'uac' in self.name.lower()
@@ -255,8 +260,13 @@ class ScenarioType(object):
     If called it will invoke the standard run hooks.
     """
 
-    def __init__(self, agents, defaults, clientdefaults=None,
-                 serverdefaults=None, confpy=None, enable_screen_file=True):
+    def __init__(
+        self, agents, defaults, clientdefaults=None,
+         serverdefaults=None, confpy=None, enable_screen_file=True
+    ):
+        # placeholder for process "runner"
+        self._runner = None
+
         # agents iterable in launch-order
         self._agents = agents
         ua_attrs = UserAgent.keys()
@@ -432,10 +442,30 @@ class ScenarioType(object):
         return type(self)(
             self.prepare(agents), self._defaults, confpy=self.mod)
 
-    def __call__(self, agents=None, block=True, timeout=180, runner=None,
-                 raise_exc=True, copy_agents=False, **kwargs):
-        return plugin.mng.hook.pysipp_run_protocol(
-            scen=self,
-            block=block, timeout=timeout, runner=runner,
-            raise_exc=raise_exc, **kwargs
+    async def arun(
+        self,
+        timeout=180,
+        runner=None,
+    ):
+        agents = self.prepare()
+        runner = runner or launch.TrioRunner()
+
+        return await launch.run_all_agents(runner, agents, timeout=timeout)
+
+    def run(
+        self,
+        timeout=180,
+        **kwargs
+    ):
+        """Run scenario blocking to completion."""
+        return trio.run(
+            partial(
+                self.arun,
+                timeout=timeout,
+                **kwargs
+            )
         )
+
+    def __call__(self, *args, **kwargs):
+        # TODO: deprecation warning here
+        return self.run(*args, **kwargs)
