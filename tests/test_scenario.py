@@ -1,0 +1,3 @@
+'''
+pysipp.agent module tests
+'''
