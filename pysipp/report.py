@@ -17,6 +17,7 @@ EXITCODES = {
     99: "Normal exit without calls processed",
     -1: "Fatal error",
     -2: "Fatal error binding a socket",
+    -9: "Signalled to stop with SIGUSR1",
     -10: "Signalled to stop with SIGUSR1",
     254: "Connection Error: socket already in use",
     255: "Command or syntax error: check stderr output",
@@ -44,15 +45,16 @@ def err_summary(agents2procs):
         return msg
 
 
-def emit_logfiles(agents2procs, level="warn", max_lines=100):
-    """Log all available SIPp log-file contents"""
+async def emit_logfiles(agents2procs, level='warn', max_lines=100):
+    """Log all available SIPp log-file contents
+    """
     emit = getattr(log, level)
     for ua, proc in agents2procs:
 
         # print stderr
         emit(
             "stderr for '{}' @ {}\n{}\n".format(
-                ua.name, ua.srcaddr, proc.streams.stderr
+                ua.name, ua.srcaddr, proc.stderr_output
             )
         )
         # FIXME: no idea, but some logs are not being printed without this
