@@ -107,7 +107,9 @@ def scenario(dirpath=None, proxyaddr=None, autolocalsocks=True, **scenkwargs):
 
             # same as above
             scen = plugin.mng.hook.pysipp_conf_scen_protocol(
-                agents=[uas, uac], confpy=None, scenkwargs=scenkwargs
+                agents=[uas, uac],
+                confpy=None,
+                scenkwargs=scenkwargs,
             )
 
     if proxyaddr:
