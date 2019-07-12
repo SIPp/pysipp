@@ -59,7 +59,8 @@ class TrioRunner(object):
         for cmd in cmds:
             log.debug(
                 "launching cmd:\n\"{}\"\n".format(cmd))
-            proc = await trio.open_process(
+            # proc = await trio.open_process(
+            proc = trio.Process(
                 shlex.split(cmd),
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE
