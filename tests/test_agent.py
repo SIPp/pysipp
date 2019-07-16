@@ -160,3 +160,12 @@ def test_scenario():
     assert uac.uri_username != doggy
 
     assert scen.name == 'uas_uac'
+
+
+def test_authentication_arguments():
+    client = agent.client(auth_username='username', auth_password='passw0rd')
+
+    cmd = client.render()
+
+    assert "-au 'username'" in cmd
+    assert "-ap 'passw0rd'" in cmd
