@@ -56,8 +56,7 @@ class TrioRunner(object):
         for cmd in cmds:
             log.debug(
                 "launching cmd:\n\"{}\"\n".format(cmd))
-            # proc = await trio.open_process(
-            proc = trio.Process(
+            proc = await trio.open_process(
                 shlex.split(cmd),
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE
@@ -157,32 +156,32 @@ class TrioRunner(object):
         self._procs.clear()
 
 
-async def run_all_agents(runner, agents, timeout=180):
-    """Run a sequencec of agents using a ``TrioRunner``.
-    """
-    async def finalize():
-        # this might raise TimeoutError
-        cmds2procs = await runner.get(timeout=timeout)
-        agents2procs = list(zip(agents, cmds2procs.values()))
-        msg = report.err_summary(agents2procs)
-        if msg:
-            # report logs and stderr
-            await report.emit_logfiles(agents2procs)
-            raise SIPpFailure(msg)
-
-        return cmds2procs
+async def run_all_agents(runner, agents, timeout=180, block=True):
+    """Run a sequencec of agents using a ``TrioRunner``."""
 
     try:
-        await runner.run(
-            (ua.render() for ua in agents),
-            timeout=timeout
-        )
-        await finalize()
+        await runner.run((ua.render() for ua in agents), timeout=timeout)
+        if block:
+            await finalize(runner, agents, timeout)
         return runner
     except TimeoutError as terr:
         # print error logs even when we timeout
         try:
-            await finalize()
+            await finalize(runner, agents, timeout)
         except SIPpFailure as err:
-            assert 'exit code -9' in str(err)
+            assert "exit code -9" in str(err)
             raise terr
+
+
+async def finalize(runner, agents, timeout):
+    """Block up to `timeout` seconds for all agents to complete."""
+    # this might raise TimeoutError
+    cmds2procs = await runner.get(timeout=timeout)
+    agents2procs = list(zip(agents, cmds2procs.values()))
+    msg = report.err_summary(agents2procs)
+    if msg:
+        # report logs and stderr
+        await report.emit_logfiles(agents2procs)
+        raise SIPpFailure(msg)
+
+    return cmds2procs

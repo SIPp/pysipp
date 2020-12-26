@@ -18,6 +18,7 @@ log = utils.get_logger()
 
 SocketAddr = namedtuple('SocketAddr', 'ip port')
 
+DEFAULT_RUNNER_TIMEOUT = 180
 
 def tuple_property(attrs):
     def getter(self):
@@ -443,13 +444,27 @@ class ScenarioType(object):
 
     async def arun(
         self,
-        timeout=180,
+        timeout=DEFAULT_RUNNER_TIMEOUT,
         runner=None,
+        block=True,
     ):
-        agents = self.prepare()
-        runner = runner or launch.TrioRunner()
+        self._prepared_agents = agents = self.prepare()
+        self._runner = runner = runner or launch.TrioRunner()
 
-        return await launch.run_all_agents(runner, agents, timeout=timeout)
+        return await launch.run_all_agents(runner, agents, timeout=timeout, block=block)
+
+    def finalize(self, *, timeout=DEFAULT_RUNNER_TIMEOUT):
+        assert (
+            self._prepared_agents and self._runner
+        ), "Must run scenario before finalizing."
+        return trio.run(
+            partial(
+                launch.finalize,
+                self._runner,
+                self._prepared_agents,
+                timeout=timeout,
+            )
+        )
 
     def run(
         self,
