@@ -269,6 +269,7 @@ class ScenarioType(object):
 
         # agents iterable in launch-order
         self._agents = agents
+        self._prepared_agents = None
         ua_attrs = UserAgent.keys()
 
         # default settings
