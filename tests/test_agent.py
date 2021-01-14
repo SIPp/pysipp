@@ -199,7 +199,6 @@ def test_pass_bad_socket_addr():
     with pytest.raises(ValueError):
         pysipp.client(proxyaddr='10.10.8.88')
 
-
 def test_authentication_arguments():
     client = agent.client(auth_username='username', auth_password='passw0rd')
 

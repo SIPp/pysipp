@@ -43,6 +43,9 @@ nosetests.xml
 coverage.xml
 *,cover
 
+# virtual environment
+venv
+
 # Translations
 *.mo
 *.pot
