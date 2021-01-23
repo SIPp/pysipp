@@ -6,8 +6,9 @@ import signal
 import subprocess
 import time
 from . import utils
-from pprint import pformat
 from collections import OrderedDict, namedtuple
+from functools import partial
+from pprint import pformat
 
 import trio
 
@@ -149,18 +150,19 @@ class TrioRunner(object):
         self._procs.clear()
 
 
-async def run_all_agents(runner, agents, timeout=180, block=True):
+async def run_all_agents(runner, agents, timeout, block=True):
     """Run a sequencec of agents using a ``TrioRunner``."""
 
     try:
         await runner.run((ua.render() for ua in agents), timeout=timeout)
         if block:
-            await finalize(runner, agents, timeout)
-        return runner
+            return await finalize(runner, agents, timeout)
+        else:
+            return finalizer(finalize, runner, agents)
     except TimeoutError as terr:
         # print error logs even when we timeout
         try:
-            await finalize(runner, agents, timeout)
+            return await finalize(runner, agents, timeout)
         except SIPpFailure as err:
             assert "exit code -9" in str(err)
             raise terr
@@ -178,3 +180,14 @@ async def finalize(runner, agents, timeout):
         raise SIPpFailure(msg)
 
     return cmds2procs
+
+
+def finalizer(finalize_coro, runner, agents):
+    def with_timeout(timeout):
+        return trio.run(
+            partial(finalize_coro, timeout=timeout),
+            runner,
+            agents,
+        )
+
+    return with_timeout

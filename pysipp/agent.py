@@ -441,25 +441,14 @@ class ScenarioType(object):
         runner=None,
         block=True,
     ):
-        self._prepared_agents = agents = self.prepare()
-        self._runner = runner = runner or launch.TrioRunner()
+        agents = self.prepare()
+        self.runner = runner or launch.TrioRunner()
 
-        return await launch.run_all_agents(runner, agents, timeout=timeout, block=block)
-
-    def finalize(self, *, timeout=DEFAULT_RUNNER_TIMEOUT):
-        assert (
-            self._prepared_agents and self._runner
-        ), "Must run scenario before finalizing."
-        return trio.run(
-            partial(
-                launch.finalize,
-                self._runner,
-                self._prepared_agents,
-                timeout=timeout,
-            )
+        return await launch.run_all_agents(
+            self.runner, agents, timeout=timeout, block=block
         )
 
-    def run(self, timeout=180, **kwargs):
+    def run(self, timeout=DEFAULT_RUNNER_TIMEOUT, **kwargs):
         """Run scenario blocking to completion."""
         return trio.run(partial(self.arun, timeout=timeout, **kwargs))
 

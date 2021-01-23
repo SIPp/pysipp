@@ -73,20 +73,20 @@ def test_proxyaddr_with_scendir(scendir):
 def test_sync_run(scenwalk):
     """Ensure all scenarios in the test run to completion in synchronous mode"""
     for path, scen in scenwalk():
-        runner = scen(timeout=6)
-        for cmd, proc in runner._procs.items():
+        finalizer = scen(timeout=6)
+        for cmd, proc in finalizer.items():
             assert proc.returncode == 0
 
 
 def test_async_run(scenwalk):
     """Ensure multiple scenarios run to completion in asynchronous mode."""
     finalizers = []
-    for path, scen in scenwalk():
-        finalizers.append((scen, scen(block=False)))
+    for _, scen in scenwalk():
+        finalizers.append(scen(block=False))
 
     # collect all results synchronously
-    for scen, finalizer in finalizers:
-        for cmd, proc in scen.finalize(timeout=6).items():
+    for finalizer in finalizers:
+        for cmd, proc in finalizer(timeout=6).items():
             assert proc.returncode == 0
 
 
@@ -94,8 +94,8 @@ def test_basic(basic_scen):
     """Test the most basic uac <-> uas call flow"""
     assert len(basic_scen.agents) == 2
     # ensure sync run works
-    runner = basic_scen()
-    assert not runner.is_alive()
+    basic_scen()
+    assert not basic_scen.runner.is_alive()
 
 
 def test_unreachable_uas(basic_scen):

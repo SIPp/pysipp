@@ -109,20 +109,21 @@ You can also launch multiple multi-UA scenarios concurrently using
 non-blocking mode:
 
 ```python
-scens = []
+finalizers = []
 for path, scen in pysipp.walk('path/to/scendirs/root/', proxyaddr=('10.10.8.1', 5060)):
     print("Running scenario collected from {}".format(path))
     scen(block=False)
-    scens.append(scen)
+    finalizers.append(scen)
 
 # All scenarios should now be running concurrently so we can continue
 # program execution...
 print("Continuing program execution...")
 
-# Wait to collect all the results
+# Calling `scen` returns a finalizer that can be
+# used to wait for each scenario with a timeout
 print("Finalizing all scenarios and collecting results")
-for scen in scens:
-  scen.finalize()
+for finalizer in finalizers:
+  finalizer(timeout=10)
 ```
 
 `scen.finalize()` actually calls a special cleanup function defined in the

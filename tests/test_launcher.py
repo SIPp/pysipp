@@ -10,7 +10,7 @@ from pysipp.launch import TrioRunner, run_all_agents, SIPpFailure
 
 def run_blocking(runner, agents):
     assert not runner.is_alive()
-    trio.run(run_all_agents, runner, agents)
+    trio.run(run_all_agents, runner, agents, 10)
     assert not runner.is_alive()
     return runner
 
