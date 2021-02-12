@@ -26,7 +26,7 @@ with open('README.md') as f:
 
 setup(
     name="pysipp",
-    version='1.0.0.dev',
+    version='1.0.0.dev0',
     description="A SIPp scenario launcher",
     long_description=readme,
     long_description_content_type="text/markdown",
