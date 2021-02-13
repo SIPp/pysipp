@@ -1,6 +1,6 @@
-'''
+"""
 Launchers for invoking SIPp user agents
-'''
+"""
 import shlex
 import signal
 import subprocess
@@ -16,22 +16,22 @@ from . import report
 
 log = utils.get_logger()
 
-Streams = namedtuple('Streams', 'stdout stderr')
+Streams = namedtuple("Streams", "stdout stderr")
 
 
 class TimeoutError(Exception):
-    'SIPp process timeout exception'
+    "SIPp process timeout exception"
 
 
 class SIPpFailure(RuntimeError):
-    '''SIPp commands failed'''
+    """SIPp commands failed"""
 
 
 class TrioRunner(object):
-    '''Run a sequence of SIPp cmds asynchronously. If any process terminates
+    """Run a sequence of SIPp cmds asynchronously. If any process terminates
     with a non-zero exit code, immediately canacel all remaining processes and
     collect std streams.
-    '''
+    """
 
     def __init__(
         self,
@@ -41,14 +41,14 @@ class TrioRunner(object):
 
     async def run(self, cmds, rate=300, **kwargs):
         if self.is_alive():
-            raise RuntimeError('Not all processes from a prior run have completed')
+            raise RuntimeError("Not all processes from a prior run have completed")
         if self._procs:
             raise RuntimeError(
-                'Process results have not been cleared from previous run'
+                "Process results have not been cleared from previous run"
             )
         # run agent commands in sequence
         for cmd in cmds:
-            log.debug("launching cmd:\n'{}'\n".format(cmd))
+            log.debug('launching cmd:\n"{}"\n'.format(cmd))
             proc = await trio.open_process(
                 shlex.split(cmd), stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
             )
@@ -60,9 +60,9 @@ class TrioRunner(object):
         return self._procs
 
     async def get(self, timeout=180):
-        '''Block up to `timeout` seconds for all agents to complete.
+        """Block up to `timeout` seconds for all agents to complete.
         Either return (cmd, proc) pairs or raise `TimeoutError` on timeout
-        '''
+        """
         signalled = None
 
         # taken mostly verbatim from ``trio.run_process()``
@@ -78,7 +78,7 @@ class TrioRunner(object):
                 except trio.ClosedResourceError:
                     pass
 
-                return b''.join(chunks)
+                return b"".join(chunks)
 
         async def wait_on_proc(proc):
             nonlocal signalled
@@ -111,9 +111,9 @@ class TrioRunner(object):
             )
 
     def iterprocs(self):
-        '''Iterate all processes which are still alive yielding
+        """Iterate all processes which are still alive yielding
         (cmd, proc) pairs
-        '''
+        """
         return (
             (cmd, proc)
             for cmd, proc in self._procs.items()
@@ -121,11 +121,11 @@ class TrioRunner(object):
         )
 
     def stop(self):
-        '''Stop all agents with SIGUSR1 as per SIPp's signal handling'''
+        """Stop all agents with SIGUSR1 as per SIPp's signal handling"""
         return self._signalall(signal.SIGUSR1)
 
     def terminate(self):
-        '''Kill all agents with SIGTERM'''
+        """Kill all agents with SIGTERM"""
         return self._signalall(signal.SIGTERM)
 
     def _signalall(self, signum):
@@ -141,17 +141,17 @@ class TrioRunner(object):
         return signalled
 
     def is_alive(self):
-        '''Return bool indicating whether some agents are still alive'''
+        """Return bool indicating whether some agents are still alive"""
         return any(self.iterprocs())
 
     def clear(self):
-        '''Clear all processes from the last run'''
-        assert not self.is_alive(), 'Not all processes have completed'
+        """Clear all processes from the last run"""
+        assert not self.is_alive(), "Not all processes have completed"
         self._procs.clear()
 
 
 async def run_all_agents(runner, agents, timeout, block=True):
-    '''Run a sequencec of agents using a ``TrioRunner``.'''
+    """Run a sequencec of agents using a ``TrioRunner``."""
 
     try:
         await runner.run((ua.render() for ua in agents), timeout=timeout)
@@ -164,12 +164,12 @@ async def run_all_agents(runner, agents, timeout, block=True):
         try:
             return await finalize(runner, agents, timeout)
         except SIPpFailure as err:
-            assert 'exit code -9' in str(err)
+            assert "exit code -9" in str(err)
             raise terr
 
 
 async def finalize(runner, agents, timeout):
-    '''Block up to `timeout` seconds for all agents to complete.'''
+    """Block up to `timeout` seconds for all agents to complete."""
     # this might raise TimeoutError
     cmds2procs = await runner.get(timeout=timeout)
     agents2procs = list(zip(agents, cmds2procs.values()))

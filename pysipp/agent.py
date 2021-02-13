@@ -1,6 +1,6 @@
-'''
+"""
 Wrappers for user agents which apply sensible cmdline arg defaults
-'''
+"""
 from os import path
 import re
 import itertools
@@ -16,7 +16,7 @@ from . import command, plugin, utils, launch, report
 
 log = utils.get_logger()
 
-SocketAddr = namedtuple('SocketAddr', 'ip port')
+SocketAddr = namedtuple("SocketAddr", "ip port")
 
 DEFAULT_RUNNER_TIMEOUT = 180
 
@@ -33,39 +33,39 @@ def tuple_property(attrs):
             if pair is None:
                 pair = (None, None)
             else:
-                raise ValueError('{} must be a tuple'.format(pair))
+                raise ValueError("{} must be a tuple".format(pair))
         for attr, val in zip(attrs, pair):
             setattr(self, attr, val)
 
-    doc = '{} parameters composed as a tuple'.format(', '.join(attrs))
+    doc = "{} parameters composed as a tuple".format(", ".join(attrs))
 
     return property(getter, setter, doc=doc)
 
 
 class UserAgent(command.SippCmd):
-    '''An extension of a SIPp command string which provides more pythonic
+    """An extension of a SIPp command string which provides more pythonic
     higher level attributes for assigning input arguments similar to
     configuration options for a SIP UA.
-    '''
+    """
 
     # we skip `error` since we can get it from stderr
-    _log_types = 'screen log'.split()
-    _debug_log_types = 'calldebug message'.split()
-    _to_console = 'screen'
+    _log_types = "screen log".split()
+    _debug_log_types = "calldebug message".split()
+    _to_console = "screen"
 
     @property
     def name(self):
-        '''Compute the name identifier for this agent based the scenario script
+        """Compute the name identifier for this agent based the scenario script
         or scenario name
-        '''
+        """
         return self.scen_name or path2namext(self.scen_file) or str(None)
 
-    srcaddr = tuple_property(('local_host', 'local_port'))
-    destaddr = tuple_property(('remote_host', 'remote_port'))
-    mediaaddr = tuple_property(('media_addr', 'media_port'))
-    proxyaddr = tuple_property(('proxy_host', 'proxy_port'))
-    ipcaddr = tuple_property(('ipc_host', 'ipc_port'))
-    call_load = tuple_property(('rate', 'limit', 'call_count'))
+    srcaddr = tuple_property(("local_host", "local_port"))
+    destaddr = tuple_property(("remote_host", "remote_port"))
+    mediaaddr = tuple_property(("media_addr", "media_port"))
+    proxyaddr = tuple_property(("proxy_host", "proxy_port"))
+    ipcaddr = tuple_property(("ipc_host", "ipc_port"))
+    call_load = tuple_property(("rate", "limit", "call_count"))
 
     def __call__(self, *args, **kwargs):
         return self.run(*args, **kwargs)
@@ -81,59 +81,59 @@ class UserAgent(command.SippCmd):
         return scen.run(timeout=timeout, **kwargs)
 
     def is_client(self):
-        return 'uac' in self.name.lower()
+        return "uac" in self.name.lower()
 
     def is_server(self):
-        return 'uas' in self.name.lower()
+        return "uas" in self.name.lower()
 
-    def iter_logfile_items(self, types_attr='_log_types', enable_screen_file=True):
+    def iter_logfile_items(self, types_attr="_log_types", enable_screen_file=True):
         for name in getattr(self, types_attr):
-            if name != 'screen' or enable_screen_file:
-                attr_name = name + '_file'
+            if name != "screen" or enable_screen_file:
+                attr_name = name + "_file"
                 yield attr_name, getattr(self, attr_name)
 
     def iter_toconsole_items(self):
-        yield 'screen_file', self.screen_file
+        yield "screen_file", self.screen_file
 
     @property
     def cmd(self):
-        '''Rendered SIPp command string'''
+        """Rendered SIPp command string"""
         return self.render()
 
     @property
     def logdir(self):
-        return getattr(self, '_logdir', None)
+        return getattr(self, "_logdir", None)
 
     @logdir.setter
     def logdir(self, dirpath):
-        assert path.isdir(dirpath), '{} is an invalid path'.format(dirpath)
+        assert path.isdir(dirpath), "{} is an invalid path".format(dirpath)
         self._logdir = dirpath
 
     @property
-    def plays_media(self, patt='play_pcap_audio'):
-        '''Bool determining whether script plays media'''
+    def plays_media(self, patt="play_pcap_audio"):
+        """Bool determining whether script plays media"""
         # TODO: should be able to parse using -sd
         if not self.scen_file:
             return False
 
-        with open(self.scen_file, 'r') as sf:
+        with open(self.scen_file, "r") as sf:
             return bool(re.search(patt, sf.read()))
 
     def enable_tracing(self):
-        '''Enable trace flags for this command'''
+        """Enable trace flags for this command"""
         for name in self._log_types:
-            attr_name = 'trace_' + name
+            attr_name = "trace_" + name
             setattr(self, attr_name, True)
 
     def enable_logging(self, logdir=None, debug=False, enable_screen_file=True):
-        '''Enable agent logging by appending appropriately named log file
+        """Enable agent logging by appending appropriately named log file
         arguments to the underlying command.
-        '''
+        """
         logattrs = self.iter_logfile_items(enable_screen_file=enable_screen_file)
         if debug:
             logattrs = itertools.chain(
                 logattrs,
-                self.iter_logfile_items('_debug_log_types'),
+                self.iter_logfile_items("_debug_log_types"),
             )
         # prefix all log file paths
         for name, attr in logattrs:
@@ -143,7 +143,7 @@ class UserAgent(command.SippCmd):
                 attr
                 or path.join(
                     logdir or self.logdir or tempfile.gettempdir(),
-                    '{}_{}'.format(self.name, name),
+                    "{}_{}".format(self.name, name),
                 ),
             )
 
@@ -158,15 +158,15 @@ def path2namext(filepath):
 
 
 def ua(logdir=None, **kwargs):
-    '''Default user agent factory.
+    """Default user agent factory.
     Returns a command string instance with sensible default arguments.
-    '''
+    """
     defaults = {
-        'bin_path': spawn.find_executable('sipp'),
+        "bin_path": spawn.find_executable("sipp"),
     }
     # drop any built-in scen if a script file is provided
-    if 'scen_file' in kwargs:
-        kwargs.pop('scen_name', None)
+    if "scen_file" in kwargs:
+        kwargs.pop("scen_name", None)
 
     # override with user settings
     defaults.update(kwargs)
@@ -180,25 +180,25 @@ def ua(logdir=None, **kwargs):
 
 
 def server(**kwargs):
-    '''A SIPp user agent server
+    """A SIPp user agent server
     (i.e. recieves a SIP message as it's first action)
-    '''
+    """
     defaults = {
-        'scen_name': 'uas',
+        "scen_name": "uas",
     }
-    if 'dstaddr' in kwargs:
-        raise ValueError('User agent server does not accept a destination address')
+    if "dstaddr" in kwargs:
+        raise ValueError("User agent server does not accept a destination address")
     # override with user settings
     defaults.update(kwargs)
     return ua(**defaults)
 
 
 def client(**kwargs):
-    '''A SIPp user agent client
+    """A SIPp user agent client
     (i.e. sends a SIP message as it's first action)
-    '''
+    """
     defaults = {
-        'scen_name': 'uac',
+        "scen_name": "uac",
     }
     # override with user settings
     defaults.update(kwargs)
@@ -207,26 +207,26 @@ def client(**kwargs):
 
 # default values every scenario should define at a minimum
 _minimum_defaults_template = {
-    'key_vals': {},
-    'global_vars': {},
+    "key_vals": {},
+    "global_vars": {},
 }
 _scen_defaults_template = {
-    'recv_timeout': 5000,
-    'call_count': 1,
-    'rate': 1,
-    'limit': 1,
-    'logdir': tempfile.gettempdir(),
+    "recv_timeout": 5000,
+    "call_count": 1,
+    "rate": 1,
+    "limit": 1,
+    "logdir": tempfile.gettempdir(),
 }
 _scen_defaults_template.update(deepcopy(_minimum_defaults_template))
 
 
 def Scenario(agents, **kwargs):
-    '''Wraps (subsets of) user agents in global state pertaining to configuration,
+    """Wraps (subsets of) user agents in global state pertaining to configuration,
     routing, and default arguments.
 
     If called it will invoke the standard run hooks.
-    '''
-    scentype = type('Scenario', (ScenarioType,), {})
+    """
+    scentype = type("Scenario", (ScenarioType,), {})
 
     _defs = OrderedDict(deepcopy(_scen_defaults_template))
     # for any passed kwargs that have keys in ``_defaults_template``, set them
@@ -237,7 +237,7 @@ def Scenario(agents, **kwargs):
 
     # if a `defaults` kwarg is passed in by the user override template values with
     # values from that as well
-    user_defaults = kwargs.pop('defaults', None)
+    user_defaults = kwargs.pop("defaults", None)
     if user_defaults:
         _defs.update(user_defaults)
 
@@ -247,11 +247,11 @@ def Scenario(agents, **kwargs):
 
 
 class ScenarioType(object):
-    '''Wraps (subsets of) user agents in global state pertaining to configuration,
+    """Wraps (subsets of) user agents in global state pertaining to configuration,
     routing, and default arguments.
 
     If called it will invoke the standard run hooks.
-    '''
+    """
 
     def __init__(
         self,
@@ -262,7 +262,7 @@ class ScenarioType(object):
         confpy=None,
         enable_screen_file=True,
     ):
-        # placeholder for process 'runner'
+        # placeholder for process "runner"
         self._runner = None
 
         # agents iterable in launch-order
@@ -304,9 +304,9 @@ class ScenarioType(object):
 
     @property
     def name(self):
-        '''Attempt to extract a name from a combination of scenario directory
+        """Attempt to extract a name from a combination of scenario directory
         and script names
-        '''
+        """
         dirnames = []
         for agent in self._agents:
             if agent.scen_file:
@@ -316,54 +316,54 @@ class ScenarioType(object):
 
         # concat dirnames if scripts come from separate dir locations
         if len(set(dirnames)) > 1:
-            return '_'.join(dirnames)
+            return "_".join(dirnames)
 
         return dirnames[0]
 
-    def findbyaddr(self, socket, bytype=''):
-        '''Lookup an agent by socket address. `bytype` is a keyword which
+    def findbyaddr(self, socket, bytype=""):
+        """Lookup an agent by socket address. `bytype` is a keyword which
         determines which socket to use at the key and can be one of
         {'media', 'dest', 'src'}
-        '''
+        """
         for agent in self.prepare():
-            val = getattr(agent, '{}sockaddr'.format(bytype), False)
+            val = getattr(agent, "{}sockaddr".format(bytype), False)
             if val:
                 return agent
 
     @property
     def has_media(self):
-        '''Bool dermining whether this scen is a media player'''
+        """Bool dermining whether this scen is a media player"""
         if any(agent.plays_media for agent in self._agents):
             return True
         return False
 
     @property
     def dirpath(self):
-        '''Scenario directory path in the file system where all xml scripts
+        """Scenario directory path in the file system where all xml scripts
         and pysipp_conf.py should reside.
-        '''
+        """
         scenfile = self.prepare()[0].scen_file
         return path.dirname(scenfile) if scenfile else None
 
     def cmditems(self):
-        '''Agent names to cmd strings items'''
+        """Agent names to cmd strings items"""
         return [(agent.name, agent.cmd) for agent in self.prepare()]
 
     def pformat_cmds(self):
-        '''Pretty format string for printing agent commands'''
-        return '\n\n'.join(
-            ['{}:\n{}'.format(name, cmd) for name, cmd in self.cmditems()]
+        """Pretty format string for printing agent commands"""
+        return "\n\n".join(
+            ["{}:\n{}".format(name, cmd) for name, cmd in self.cmditems()]
         )
 
     def prepare_agent(self, agent):
-        '''Return a new agent with all default settings applied from this
+        """Return a new agent with all default settings applied from this
         scenario
-        '''
+        """
 
         def merge(dicts):
-            '''Merge dicts without clobbering up to 1 level deep's worth of
+            """Merge dicts without clobbering up to 1 level deep's worth of
             sub-dicts
-            '''
+            """
             merged = deepcopy(dicts[0])
             for key, val in itertools.chain(*[d.items() for d in dicts[1:]]):
                 if isinstance(val, dict):
@@ -375,24 +375,24 @@ class ScenarioType(object):
 
         if agent.is_client():
             secondary = self._clientdefaults
-            dname = 'clientdefaults'
+            dname = "clientdefaults"
         elif agent.is_server():
             secondary = self._serverdefaults
-            dname = 'serverdefaults'
+            dname = "serverdefaults"
         else:
             secondary = {}
-            dname = 'unspecialized ua'
+            dname = "unspecialized ua"
 
         # call pre defaults hook
         plugin.mng.hook.pysipp_pre_ua_defaults(ua=agent)
 
         # apply defaults
         ordered = [self._defaults, secondary, agent.todict()]
-        for name, defs in zip(['defaults', dname, 'agent.todict()'], ordered):
+        for name, defs in zip(["defaults", dname, "agent.todict()"], ordered):
             log.debug("{} '{}' contents:\n{}".format(agent.name, name, defs))
 
         params = merge(ordered)
-        log.debug('{} merged contents:\n{}'.format(agent.name, params))
+        log.debug("{} merged contents:\n{}".format(agent.name, params))
         ua = UserAgent(defaults=params)
 
         ua.enable_logging(enable_screen_file=self.enable_screen_file)
@@ -403,10 +403,10 @@ class ScenarioType(object):
         return ua
 
     def prepare(self, agents=None):
-        '''Prepare (provided) agents according to the default configuration
+        """Prepare (provided) agents according to the default configuration
         setttings in `defaults`, `clients`, and `servers` and return copies
         in a list.
-        '''
+        """
         copies = []
         agents = agents or self._agents
         for agent in agents:
@@ -414,16 +414,16 @@ class ScenarioType(object):
         return copies
 
     def from_settings(self, **kwargs):
-        '''Create a new scenario from scratch using current settings calling
+        """Create a new scenario from scratch using current settings calling
         all normal plugin hooks.
-        '''
+        """
         from . import scenario
 
         scenkwargs = {
-            'dirpath': self.dirpath,
-            'defaults': self._defaults.copy(),
-            'clientdefaults': self._clientdefaults.copy(),
-            'serverdefaults': self._serverdefaults.copy(),
+            "dirpath": self.dirpath,
+            "defaults": self._defaults.copy(),
+            "clientdefaults": self._clientdefaults.copy(),
+            "serverdefaults": self._serverdefaults.copy(),
         }
         for key, value in kwargs.items():
             if key in scenkwargs:
@@ -432,7 +432,7 @@ class ScenarioType(object):
         return scenario(**scenkwargs)
 
     def from_agents(self, agents=None, autolocalsocks=True, **scenkwargs):
-        '''Create a new scenario from prepared agents.'''
+        """Create a new scenario from prepared agents."""
         return type(self)(self.prepare(agents), self._defaults, confpy=self.mod)
 
     async def arun(
@@ -449,7 +449,7 @@ class ScenarioType(object):
         )
 
     def run(self, timeout=DEFAULT_RUNNER_TIMEOUT, **kwargs):
-        '''Run scenario blocking to completion.'''
+        """Run scenario blocking to completion."""
         return trio.run(partial(self.arun, timeout=timeout, **kwargs))
 
     def __call__(self, *args, **kwargs):
