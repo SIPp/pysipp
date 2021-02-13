@@ -4,9 +4,12 @@ but (want to) use it for automated testing because it gets the job done...
 
 
 ## What is it?
-Python configuring and launching the infamous
-[SIPp](http://sipp.sourceforge.net/) using an api inspired by
-[requests](http://docs.python-requests.org/)
+Python 3.6+ configuring and launching the infamous
+[SIPp](http://sipp.sourceforge.net/) using a simple API to
+generate commands and spawn them in subprocesses.
+
+Command subprocess launching now uses
+[`trio`](https://trio.readthedocs.io/en/stable/reference-io.html#spawning-subprocesses)!
 
 ## It definitely lets you
 
@@ -25,7 +28,7 @@ Python configuring and launching the infamous
 
 
 ## Basic Usage
-Launching the default UAC scenario is a short line:
+Launching the default UAC script is a short line:
 
 ```python
 import pysipp
