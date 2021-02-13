@@ -28,6 +28,7 @@ class PopenRunner(object):
 
     Adheres to an interface similar to `multiprocessing.pool.AsyncResult`.
     """
+
     def __init__(
         self,
         subprocmod=subprocess,
@@ -45,35 +46,27 @@ class PopenRunner(object):
 
     def __call__(self, cmds, block=True, rate=300, **kwargs):
         if self._waiter and self._waiter.is_alive():
-            raise RuntimeError(
-                "Not all processes from a prior run have completed"
-            )
+            raise RuntimeError("Not all processes from a prior run have completed")
         if self._procs:
             raise RuntimeError(
                 "Process results have not been cleared from previous run"
             )
         sp = self.spm
         os = self.osm
-        DEVNULL = open(os.devnull, 'wb')
+        DEVNULL = open(os.devnull, "wb")
         fds2procs = OrderedDict()
 
         # run agent commands in sequence
         for cmd in cmds:
-            log.debug(
-                "launching cmd:\n\"{}\"\n".format(cmd))
-            proc = sp.Popen(
-                shlex.split(cmd),
-                stdout=DEVNULL,
-                stderr=sp.PIPE
-            )
+            log.debug('launching cmd:\n"{}"\n'.format(cmd))
+            proc = sp.Popen(shlex.split(cmd), stdout=DEVNULL, stderr=sp.PIPE)
             fd = proc.stderr.fileno()
-            log.debug("registering fd '{}' for pid '{}'".format(
-                fd, proc.pid))
+            log.debug("registering fd '{}' for pid '{}'".format(fd, proc.pid))
             fds2procs[fd] = self._procs[cmd] = proc
             # register for stderr hangup events
             self.poller.register(proc.stderr.fileno(), select.EPOLLHUP)
             # limit launch rate
-            time.sleep(1. / rate)
+            time.sleep(1.0 / rate)
 
         # launch waiter
         self._waiter = threading.Thread(target=self._wait, args=(fds2procs,))
@@ -103,9 +96,9 @@ class PopenRunner(object):
         log.debug("terminating waiter thread")
 
     def get(self, timeout=180):
-        '''Block up to `timeout` seconds for all agents to complete.
+        """Block up to `timeout` seconds for all agents to complete.
         Either return (cmd, proc) pairs or raise `TimeoutError` on timeout
-        '''
+        """
         if self._waiter.is_alive():
             self._waiter.join(timeout=timeout)
 
@@ -127,49 +120,51 @@ class PopenRunner(object):
                 # all procs were killed by SIGUSR1
                 raise TimeoutError(
                     "pids '{}' failed to complete after '{}' seconds".format(
-                        pformat([p.pid for p in signalled.values()]), timeout)
+                        pformat([p.pid for p in signalled.values()]), timeout
+                    )
                 )
 
         return self._procs
 
     def stop(self):
-        '''Stop all agents with SIGUSR1 as per SIPp's signal handling
-        '''
+        """Stop all agents with SIGUSR1 as per SIPp's signal handling"""
         return self._signalall(signal.SIGUSR1)
 
     def terminate(self):
-        '''Kill all agents with SIGTERM
-        '''
+        """Kill all agents with SIGTERM"""
         return self._signalall(signal.SIGTERM)
 
     def _signalall(self, signum):
         signalled = OrderedDict()
         for cmd, proc in self.iterprocs():
             proc.send_signal(signum)
-            log.warn("sent signal '{}' to cmd '{}' with pid '{}'"
-                     .format(signum, cmd, proc.pid))
+            log.warn(
+                "sent signal '{}' to cmd '{}' with pid '{}'".format(
+                    signum, cmd, proc.pid
+                )
+            )
             signalled[cmd] = proc
         return signalled
 
     def iterprocs(self):
-        '''Iterate all processes which are still alive yielding
+        """Iterate all processes which are still alive yielding
         (cmd, proc) pairs
-        '''
-        return ((cmd, proc) for cmd, proc in self._procs.items()
-                if proc and proc.poll() is None)
+        """
+        return (
+            (cmd, proc)
+            for cmd, proc in self._procs.items()
+            if proc and proc.poll() is None
+        )
 
     def is_alive(self):
-        '''Return bool indicating whether some agents are still alive
-        '''
+        """Return bool indicating whether some agents are still alive"""
         return any(self.iterprocs())
 
     def ready(self):
-        '''Return bool indicating whether all agents have completed
-        '''
+        """Return bool indicating whether all agents have completed"""
         return not self.is_alive()
 
     def clear(self):
-        '''Clear all processes from the last run
-        '''
+        """Clear all processes from the last run"""
         assert self.ready(), "Not all processes have completed"
         self._procs.clear()

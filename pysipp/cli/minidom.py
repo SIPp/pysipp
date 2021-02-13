@@ -11,7 +11,7 @@ class AttributeSorter(object):
     attributes bubble to the front.
     """
 
-    __special__ = ('request', 'response')
+    __special__ = ("request", "response")
 
     def __init__(self, obj):
         self.obj = obj
@@ -54,7 +54,7 @@ def monkeypatch_scenario_xml(self, writer, indent="", addindent="", newl=""):
     It needs to be there or SIPp otherwise seems to have trouble
     parsing the document.
     """
-    writer.write('\n')
+    writer.write("\n")
     minidom.Element.writexml(self, writer, indent, addindent, newl)
 
 
@@ -71,18 +71,17 @@ def monkeypatch_element_xml(self, writer, indent="", addindent="", newl=""):
     a_names = sorted(attrs.keys(), key=AttributeSorter)
 
     for a_name in a_names:
-        writer.write(" {}=\"".format(a_name))
+        writer.write(' {}="'.format(a_name))
         minidom._write_data(writer, attrs[a_name].value)
-        writer.write("\"")
+        writer.write('"')
     if self.childNodes:
         writer.write(">")
-        if (len(self.childNodes) == 1 and
-                self.childNodes[0].nodeType == Node.TEXT_NODE):
-            self.childNodes[0].writexml(writer, '', '', '')
+        if len(self.childNodes) == 1 and self.childNodes[0].nodeType == Node.TEXT_NODE:
+            self.childNodes[0].writexml(writer, "", "", "")
         else:
             writer.write(newl)
             for node in self.childNodes:
-                node.writexml(writer, indent+addindent, addindent, newl)
+                node.writexml(writer, indent + addindent, addindent, newl)
             writer.write(indent)
         writer.write("</{}>{}".format(self.tagName, newl))
     else:
