@@ -6,32 +6,30 @@ import inspect
 
 LOG_FORMAT = (
     "%(asctime)s %(threadName)s [%(levelname)s] %(name)s "
-    "%(filename)s:%(lineno)d : %(message)s")
+    "%(filename)s:%(lineno)d : %(message)s"
+)
 
-DATE_FORMAT = '%b %d %H:%M:%S'
+DATE_FORMAT = "%b %d %H:%M:%S"
 
 
 def get_logger():
-    """Get the project logger instance
-    """
-    return logging.getLogger('pysipp')
+    """Get the project logger instance"""
+    return logging.getLogger("pysipp")
 
 
 def log_to_stderr(level="INFO", **kwargs):
-    defaults = {'format': LOG_FORMAT, 'level': level}
+    defaults = {"format": LOG_FORMAT, "level": level}
     defaults.update(kwargs)
     logging.basicConfig(**defaults)
 
 
 def get_tmpdir():
-    """Return a random temp dir
-    """
-    return tempfile.mkdtemp(prefix='pysipp_')
+    """Return a random temp dir"""
+    return tempfile.mkdtemp(prefix="pysipp_")
 
 
 def load_mod(path, name=None):
-    """Load a source file as a module
-    """
+    """Load a source file as a module"""
     name = name or os.path.splitext(os.path.basename(path))[0]
     # load module sources
     return imp.load_source(name, path)
@@ -44,7 +42,7 @@ def iter_data_descrs(cls):
     for name in dir(cls):
         attr = getattr(cls, name)
         if inspect.isdatadescriptor(attr):
-            if (hasattr(attr, 'fset') and not attr.fset) or '_' in name[0]:
+            if (hasattr(attr, "fset") and not attr.fset) or "_" in name[0]:
                 continue
             yield name, attr
 
@@ -53,10 +51,12 @@ def DictProxy(d, keys, cls=None):
     """A dictionary proxy object which provides attribute access to the
     elements of the provided dictionary `d`
     """
+
     class DictProxyAttr(object):
         """An attribute which when modified proxies to an instance dictionary
         named `dictname`.
         """
+
         def __init__(self, key):
             self.key = key
 
@@ -78,14 +78,14 @@ def DictProxy(d, keys, cls=None):
     else:
         # delegate some methods to the original dict
         proxied_attrs = [
-            '__repr__',
-            '__getitem__',
-            '__setitem__',
-            '__contains__',
-            '__len__',
-            'get',
-            'update',
-            'setdefault',
+            "__repr__",
+            "__getitem__",
+            "__setitem__",
+            "__contains__",
+            "__len__",
+            "get",
+            "update",
+            "setdefault",
         ]
         attrs.update({attr: getattr(d, attr) for attr in proxied_attrs})
 
@@ -93,7 +93,7 @@ def DictProxy(d, keys, cls=None):
         def init(self):
             self.__dict__ = d
 
-        attrs.update({'__init__': init})
+        attrs.update({"__init__": init})
 
         # render a new type
-        return type('DictProxy', (), attrs)
+        return type("DictProxy", (), attrs)

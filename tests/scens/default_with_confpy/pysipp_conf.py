@@ -1,6 +1,6 @@
 def pysipp_conf_scen(agents, scen):
-    scen.uri_username = 'doggy'
-    agents['uac'].srcaddr = '127.0.0.1', 5070
+    scen.uri_username = "doggy"
+    agents["uac"].srcaddr = "127.0.0.1", 5070
 
 
 def pysipp_order_agents(agents, clients, servers):

@@ -1,6 +1,6 @@
-'''
+"""
 reporting for writing SIPp log files to the console
-'''
+"""
 import time
 from os import path
 from collections import OrderedDict
@@ -35,22 +35,24 @@ def err_summary(agents2procs):
     if any(name2ec.values()):
         # raise a detailed error
         msg = "Some agents failed\n"
-        msg += '\n'.join("'{}' with exit code {} -> {}".format(
-            name, rc, EXITCODES.get(rc, "unknown exit code"))
+        msg += "\n".join(
+            "'{}' with exit code {} -> {}".format(
+                name, rc, EXITCODES.get(rc, "unknown exit code")
+            )
             for name, rc in name2ec.items()
         )
         return msg
 
 
-async def emit_logfiles(agents2procs, level='warn', max_lines=100):
-    """Log all available SIPp log-file contents
-    """
+async def emit_logfiles(agents2procs, level="warn", max_lines=100):
+    """Log all available SIPp log-file contents"""
     emit = getattr(log, level)
     for ua, proc in agents2procs:
 
         # print stderr
-        emit("stderr for '{}' @ {}\n{}\n".format(
-            ua.name, ua.srcaddr, proc.stderr_output))
+        emit(
+            "stderr for '{}' @ {}\n{}\n".format(ua.name, ua.srcaddr, proc.stderr_output)
+        )
         # FIXME: no idea, but some logs are not being printed without this
         # logging mod bug?
         time.sleep(0.01)
@@ -58,7 +60,7 @@ async def emit_logfiles(agents2procs, level='warn', max_lines=100):
         # print log file contents
         for name, fpath in ua.iter_toconsole_items():
             if fpath and path.isfile(fpath):
-                with open(fpath, 'r') as lf:
+                with open(fpath, "r") as lf:
                     lines = lf.readlines()
                     llen = len(lines)
 
@@ -68,11 +70,14 @@ async def emit_logfiles(agents2procs, level='warn', max_lines=100):
                             "...\nOutput has been truncated to {} lines - "
                             "see '{}' for full details\n"
                         ).format(max_lines, fpath)
-                        output = ''.join(lines[:max_lines]) + toolong
+                        output = "".join(lines[:max_lines]) + toolong
                     else:
-                        output = ''.join(lines)
+                        output = "".join(lines)
                     # log it
-                    emit("'{}' contents for '{}' @ {}:\n{}".format(
-                        name, ua.name, ua.srcaddr, output))
+                    emit(
+                        "'{}' contents for '{}' @ {}:\n{}".format(
+                            name, ua.name, ua.srcaddr, output
+                        )
+                    )
                     # FIXME: same as above
                     time.sleep(0.01)

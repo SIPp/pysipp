@@ -1,6 +1,6 @@
-'''
+"""
 pysipp.agent module tests
-'''
+"""
 import pytest
 import tempfile
 import pysipp
@@ -13,9 +13,8 @@ def ua():
 
 
 def test_ua(ua):
-    """Set up a typeless agent and perform basic attr checks
-    """
-    sock = ('10.10.9.9', 5060)
+    """Set up a typeless agent and perform basic attr checks"""
+    sock = ("10.10.9.9", 5060)
     ua.proxyaddr = sock
     assert ua.name == str(None)
     assert "'{}':'{}'".format(*sock) in ua.render()
@@ -39,7 +38,7 @@ def check_log_files(ua, logdir=None):
 
 @pytest.mark.parametrize(
     "funcname",
-    ['ua', 'client', 'server'],
+    ["ua", "client", "server"],
 )
 def test_logdir(funcname):
     """Verify that a default logdir is set and filenames are
@@ -52,24 +51,22 @@ def test_logdir(funcname):
 
 
 def test_scen_assign_logdir():
-    """Verify log file arguments when logdir is set using Scenario.defaults
-    """
+    """Verify log file arguments when logdir is set using Scenario.defaults"""
     scen = pysipp.scenario()
-    logdir = tempfile.mkdtemp(suffix='_pysipp')
+    logdir = tempfile.mkdtemp(suffix="_pysipp")
     scen.defaults.logdir = logdir
     for ua in scen.prepare():
         check_log_files(ua, logdir)
 
 
 def test_scen_pass_logdir():
-    """Verify log file arguments when logdir is set using Scenario.defaults
-    """
-    logdir = tempfile.mkdtemp(suffix='_pysipp')
+    """Verify log file arguments when logdir is set using Scenario.defaults"""
+    logdir = tempfile.mkdtemp(suffix="_pysipp")
     scen = pysipp.scenario(logdir=logdir)
     assert scen.defaults.logdir == logdir
 
     # logdir isn't set until the scenario is "prepared"
-    assert scen.agents['uac'].logdir is None
+    assert scen.agents["uac"].logdir is None
 
     # logdir is set once scenario is "rendered"
     for ua in scen.prepare():
@@ -77,9 +74,8 @@ def test_scen_pass_logdir():
 
 
 def test_walk_pass_logdir():
-    logdir = tempfile.mkdtemp(suffix='_pysipp')
-    scen = next(pysipp.walk(
-        './tests/scens/default/', logdir=logdir))[1]
+    logdir = tempfile.mkdtemp(suffix="_pysipp")
+    scen = next(pysipp.walk("./tests/scens/default/", logdir=logdir))[1]
     assert scen.logdir == logdir
 
     # logdir is set once scenario is "rendered"
@@ -89,14 +85,14 @@ def test_walk_pass_logdir():
 
 def test_client():
     # check the built-in uac xml scenario
-    remote_sock = ('192.168.1.1', 5060)
+    remote_sock = ("192.168.1.1", 5060)
     uac = agent.client(destaddr=remote_sock)
     cmdstr = uac.render()
     assert "-sn 'uac'" in cmdstr
     assert "'{}':'{}'".format(*remote_sock) in cmdstr
 
     # pretend script file
-    script = '/home/sipp_scen/uac.xml'
+    script = "/home/sipp_scen/uac.xml"
     uac2 = agent.client(destaddr=remote_sock, scen_file=script)
     cmdstr = uac2.render()
     assert "-sn 'uac'" not in cmdstr
@@ -110,20 +106,20 @@ def test_server():
     assert not (ua.remote_host and ua.remote_port)
 
 
-@pytest.mark.parametrize('ua, retcode, kwargs, exc', [
-    # test unspecialized ua failure
-    (agent.ua(), 255, {}, RuntimeError),
-
-    # test client failure on bad remote destination
-    (agent.client(destaddr=('99.99.99.99', 5060)), 1, {}, RuntimeError),
-
-    # test if server times out it is signalled
-    (agent.server(), -9, {'timeout': 1}, launch.TimeoutError)],
-    ids=['ua', 'uac', 'uas'],
+@pytest.mark.parametrize(
+    "ua, retcode, kwargs, exc",
+    [
+        # test unspecialized ua failure
+        (agent.ua(), 255, {}, RuntimeError),
+        # test client failure on bad remote destination
+        (agent.client(destaddr=("99.99.99.99", 5060)), 1, {}, RuntimeError),
+        # test if server times out it is signalled
+        (agent.server(), -9, {"timeout": 1}, launch.TimeoutError),
+    ],
+    ids=["ua", "uac", "uas"],
 )
 def test_failures(ua, retcode, kwargs, exc):
-    """Test failure cases for all types of agents
-    """
+    """Test failure cases for all types of agents"""
     runner = launch.TrioRunner()
 
     # run it without raising
@@ -138,7 +134,8 @@ def test_failures(ua, retcode, kwargs, exc):
     assert len(list(runner.iterprocs())) == 0
     # tests transparency of the defaults config pipeline
     scen = plugin.mng.hook.pysipp_conf_scen_protocol(
-        agents=[ua], confpy=None, scenkwargs={})
+        agents=[ua], confpy=None, scenkwargs={}
+    )
     cmd = scen.prepare_agent(ua).render()
     assert cmd in cmds2procs
     assert len(cmds2procs) == 1
@@ -171,7 +168,7 @@ def test_scenario():
     assert uac is list(scen.clients.values())[0]
 
     # ensure defaults attr setting works
-    doggy = 'doggy'
+    doggy = "doggy"
     scen.local_host = doggy
     uas, uac = scen.prepare()
     assert uac.local_host == uas.local_host == doggy
@@ -183,7 +180,7 @@ def test_scenario():
 
     # same error for any non-spec defined agent attr
     with pytest.raises(AttributeError):
-        scen.agentdefaults.local_man = 'flasher'
+        scen.agentdefaults.local_man = "flasher"
         scen.prepare()
 
     # defaults on servers only
@@ -192,15 +189,16 @@ def test_scenario():
     assert uas.uri_username == doggy
     assert uac.uri_username != doggy
 
-    assert scen.name == 'uas_uac'
+    assert scen.name == "uas_uac"
 
 
 def test_pass_bad_socket_addr():
     with pytest.raises(ValueError):
-        pysipp.client(proxyaddr='10.10.8.88')
+        pysipp.client(proxyaddr="10.10.8.88")
+
 
 def test_authentication_arguments():
-    client = agent.client(auth_username='username', auth_password='passw0rd')
+    client = agent.client(auth_username="username", auth_password="passw0rd")
 
     cmd = client.render()
 

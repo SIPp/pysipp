@@ -1,6 +1,6 @@
-'''
+"""
 Scen dir loading
-'''
+"""
 import os
 from pysipp.load import iter_scen_dirs
 
@@ -12,9 +12,9 @@ def test_scendir_loading(scendir):
 
 def test_iter_dirs(scendir):
     paths = {
-        'default': [True, False],
-        'default_with_confpy': [True, True],
-        'just_confpy': [False, True],
+        "default": [True, False],
+        "default_with_confpy": [True, True],
+        "just_confpy": [False, True],
     }
     for path, xmls, confpy in iter_scen_dirs(scendir):
         expect = paths.get(os.path.basename(path), None)

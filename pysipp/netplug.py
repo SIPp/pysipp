@@ -15,7 +15,12 @@ def getsockaddr(host, family=socket.AF_INET, port=0, sockmod=socket):
         other processes acquiring the addr before our SIPp process re-binds.
     """
     for fam, stype, proto, _, sa in socket.getaddrinfo(
-        host, port, family, socket.SOCK_DGRAM, 0, socket.AI_PASSIVE,
+        host,
+        port,
+        family,
+        socket.SOCK_DGRAM,
+        0,
+        socket.AI_PASSIVE,
     ):
         s = socket.socket(family, stype, proto)
         s.bind(sa)

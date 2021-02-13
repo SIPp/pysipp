@@ -1,9 +1,9 @@
-'''
+"""
 hookspec defs
-'''
+"""
 import pluggy
 
-hookspec = pluggy.HookspecMarker('pysipp')
+hookspec = pluggy.HookspecMarker("pysipp")
 
 
 # UA factory hooks
@@ -44,8 +44,7 @@ def pysipp_conf_scen_protocol(agents, confpy, scenkwargs):
 
 @hookspec(firstresult=True)
 def pysipp_order_agents(agents, clients, servers):
-    """Return ua iterator which delivers agents in launch order
-    """
+    """Return ua iterator which delivers agents in launch order"""
 
 
 @hookspec(firstresult=True)
