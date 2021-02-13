@@ -1,6 +1,6 @@
-'''
+"""
 Command string rendering
-'''
+"""
 import string
 import socket
 from collections import OrderedDict
@@ -24,7 +24,8 @@ class Field(object):
         if obj is None:
             return self
         return obj._values.setdefault(
-            self.name, self._default() if self._default else None,
+            self.name,
+            self._default() if self._default else None,
         )
 
     def __set__(self, obj, value):
@@ -32,8 +33,7 @@ class Field(object):
         obj._values[self.name] = value
 
     def render(self, value):
-        return self.fmtstr.format(
-            **{self.name: "'{}'".format(value)}) if value else ''
+        return self.fmtstr.format(**{self.name: "'{}'".format(value)}) if value else ""
 
 
 class AddrField(Field):
@@ -58,14 +58,14 @@ class BoolField(Field):
 
     def render(self, value):
         # return the fmt string with a null string replacement
-        return self.fmtstr.format(**{self.name: ''}) if value else ''
+        return self.fmtstr.format(**{self.name: ""}) if value else ""
 
 
 class DictField(Field):
     _default = OrderedDict
 
     def render(self, value):
-        return ''.join(
+        return "".join(
             self.fmtstr.format(**{self.name: "{} '{}'".format(key, val)})
             for key, val in value.items()
         )
@@ -75,14 +75,13 @@ class ListField(Field):
     _default = []
 
     def render(self, value):
-        return ''.join(
-            self.fmtstr.format(**{self.name: "'{}'".format(val)})
-            for val in value
+        return "".join(
+            self.fmtstr.format(**{self.name: "'{}'".format(val)}) for val in value
         )
 
 
 def cmdstrtype(spec):
-    '''Build a command str renderer from an iterable of format string tokens.
+    """Build a command str renderer from an iterable of format string tokens.
 
     Given a `spec` (i.e. an iterable of format string specifiers), this
     function returns a command string renderer type which allows for
@@ -110,7 +109,8 @@ def cmdstrtype(spec):
         >>> cmd.remote_port = 5060
         >>> cmd.render()
         '/usr/bin/sipp doggy.com:5060 -i 192.168.0.1'
-    '''
+    """
+
     class Renderer(object):
         _specparams = OrderedDict()
 
@@ -131,19 +131,19 @@ def cmdstrtype(spec):
                 if value is not None:
                     tokens.append(descr.render(value))
 
-            return ''.join(tokens)
+            return "".join(tokens)
 
         def __setattr__(self, key, value):
             # immutable after instantiation
-            if getattr(
-                self, '_init', False
-            ) and (
-                key not in self.__class__.__dict__
-            ) and (
-                key not in self._specparams
-            ) and key[0] is not '_':
+            if (
+                getattr(self, "_init", False)
+                and (key not in self.__class__.__dict__)
+                and (key not in self._specparams)
+                and key[0] is not "_"
+            ):
                 raise AttributeError(
-                    "no settable public attribute '{}' defined".format(key))
+                    "no settable public attribute '{}' defined".format(key)
+                )
             object.__setattr__(self, key, value)
 
         @classmethod
@@ -155,14 +155,12 @@ def cmdstrtype(spec):
             return [key for key, descr in cls.descriptoritems()]
 
         def applydict(self, d):
-            """Apply contents of dict `d` onto local instance variables.
-            """
+            """Apply contents of dict `d` onto local instance variables."""
             for name, value in d.items():
                 setattr(self, name, value)
 
         def todict(self):
-            """Serialze all descriptor defined attributes into a dictionary
-            """
+            """Serialze all descriptor defined attributes into a dictionary"""
             contents = {}
             for key in self.keys():
                 val = getattr(self, key)
@@ -186,65 +184,65 @@ def cmdstrtype(spec):
 
 sipp_spec = [
     # contact info
-    '{prefix} ',
-    '{bin_path} ',
-    ('-i {local_host} ', AddrField),
-    '-p {local_port} ',
-    '-s {uri_username} ',
-    ('-rsa {proxy_host}', AddrField),  # NOTE: no space
-    ':{proxy_port} ',
-    '-auth_uri {auth_uri} ',
+    "{prefix} ",
+    "{bin_path} ",
+    ("-i {local_host} ", AddrField),
+    "-p {local_port} ",
+    "-s {uri_username} ",
+    ("-rsa {proxy_host}", AddrField),  # NOTE: no space
+    ":{proxy_port} ",
+    "-auth_uri {auth_uri} ",
     # sockets and protocols
-    '-bind_local {bind_local} ',
-    ('-mi {media_addr} ', AddrField),
-    '-mp {media_port} ',
-    '-t {transport} ',
+    "-bind_local {bind_local} ",
+    ("-mi {media_addr} ", AddrField),
+    "-mp {media_port} ",
+    "-t {transport} ",
     # scenario config/ctl
-    '-sn {scen_name} ',
-    '-sf {scen_file} ',
-    '-oocsf {ooc_scen_file} ',
-    '-recv_timeout {recv_timeout} ',
-    '-timeout {timeout} ',
-    '-d {pause_duration} ',
-    '-default_behaviors {default_behaviors} ',
-    ('-3pcc {ipc_host}', AddrField),  # NOTE: no space
-    ':{ipc_port} ',
+    "-sn {scen_name} ",
+    "-sf {scen_file} ",
+    "-oocsf {ooc_scen_file} ",
+    "-recv_timeout {recv_timeout} ",
+    "-timeout {timeout} ",
+    "-d {pause_duration} ",
+    "-default_behaviors {default_behaviors} ",
+    ("-3pcc {ipc_host}", AddrField),  # NOTE: no space
+    ":{ipc_port} ",
     # SIP vars
-    '-cid_str {cid_str} ',
-    '-base_cseq {base_cseq} ',
-    '-au {auth_username} ',
-    '-ap {auth_password} ',
+    "-cid_str {cid_str} ",
+    "-base_cseq {base_cseq} ",
+    "-au {auth_username} ",
+    "-ap {auth_password} ",
     # load settings
-    '-r {rate} ',
-    '-l {limit} ',
-    '-m {call_count} ',
-    '-rp {rate_period} ',
-    '-users {users} ',
-    '-deadcall_wait {deadcall_wait} ',
+    "-r {rate} ",
+    "-l {limit} ",
+    "-m {call_count} ",
+    "-rp {rate_period} ",
+    "-users {users} ",
+    "-deadcall_wait {deadcall_wait} ",
     # data insertion
-    ('-key {key_vals} ', DictField),
-    ('-set {global_vars} ', DictField),
+    ("-key {key_vals} ", DictField),
+    ("-set {global_vars} ", DictField),
     # files
-    '-error_file {error_file} ',
-    '-calldebug_file {calldebug_file} ',
-    '-message_file {message_file} ',
-    '-log_file {log_file} ',
-    '-inf {info_file} ',
-    ('-inf {info_files} ', ListField),
-    '-screen_file {screen_file} ',
+    "-error_file {error_file} ",
+    "-calldebug_file {calldebug_file} ",
+    "-message_file {message_file} ",
+    "-log_file {log_file} ",
+    "-inf {info_file} ",
+    ("-inf {info_files} ", ListField),
+    "-screen_file {screen_file} ",
     # bool flags
-    ('-rtp_echo {rtp_echo}', BoolField),
-    ('-timeout_error {timeout_error}', BoolField),
-    ('-aa {auto_answer}', BoolField),
-    ('-trace_err {trace_error}', BoolField),
-    ('-trace_calldebug {trace_calldebug}', BoolField),
-    ('-trace_error_codes {trace_error_codes}', BoolField),
-    ('-trace_msg {trace_message}', BoolField),
-    ('-trace_logs {trace_log}', BoolField),
-    ('-trace_screen {trace_screen}', BoolField),
-    ('-error_overwrite {error_overwrite}', BoolField),
-    ('{remote_host}', AddrField),  # NOTE: no space
-    ':{remote_port}',
+    ("-rtp_echo {rtp_echo}", BoolField),
+    ("-timeout_error {timeout_error}", BoolField),
+    ("-aa {auto_answer}", BoolField),
+    ("-trace_err {trace_error}", BoolField),
+    ("-trace_calldebug {trace_calldebug}", BoolField),
+    ("-trace_error_codes {trace_error_codes}", BoolField),
+    ("-trace_msg {trace_message}", BoolField),
+    ("-trace_logs {trace_log}", BoolField),
+    ("-trace_screen {trace_screen}", BoolField),
+    ("-error_overwrite {error_overwrite}", BoolField),
+    ("{remote_host}", AddrField),  # NOTE: no space
+    ":{remote_port}",
 ]
 
 

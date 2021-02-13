@@ -1,6 +1,6 @@
-'''
+"""
 Basic agent/scenario launching
-'''
+"""
 from pysipp.agent import client, server
 from pysipp.launch import PopenRunner
 
@@ -16,7 +16,7 @@ def run_blocking(*agents):
 def test_agent_fails():
     uas = server(call_count=1)
     # apply bogus ip which can't be bound
-    uas.local_host, uas.local_port = '99.99.99.99', 5060
+    uas.local_host, uas.local_port = "99.99.99.99", 5060
     # client calls server at bogus addr
     uac = client(destaddr=(uas.local_host, uas.local_port))
     uac.recv_timeout = 1  # avoids SIPp issue #176

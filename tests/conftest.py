@@ -1,6 +1,6 @@
-'''
+"""
 unit testing
-'''
+"""
 import pytest
 import os
 from pysipp import agent, scenario, utils
@@ -22,16 +22,12 @@ def scendir():
 
 @pytest.fixture
 def default_agents():
-    uas = agent.server(local_host='127.0.0.1', local_port=5060, call_count=1)
+    uas = agent.server(local_host="127.0.0.1", local_port=5060, call_count=1)
     uac = agent.client(call_count=1, destaddr=(uas.local_host, uas.local_port))
     return uas, uac
 
 
-@pytest.fixture(
-    params=[True, False],
-    ids="autolocalsocks={}".format
-)
+@pytest.fixture(params=[True, False], ids="autolocalsocks={}".format)
 def basic_scen(request):
-    """The most basic scenario instance
-    """
+    """The most basic scenario instance"""
     return scenario(autolocalsocks=request.param)
