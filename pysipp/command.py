@@ -197,6 +197,9 @@ sipp_spec = [
     ("-mi {media_addr} ", AddrField),
     "-mp {media_port} ",
     "-t {transport} ",
+    "-tls_cert {tls_cert}",
+    "-tls_key {tls_key}",
+    "-tls_crl {tls_crl}",
     # scenario config/ctl
     "-sn {scen_name} ",
     "-sf {scen_file} ",
