@@ -158,7 +158,7 @@ async def run_all_agents(runner, agents, timeout, block=True):
         if block:
             return await finalize(runner, agents, timeout)
         else:
-            return finalizer(finalize, runner, agents)
+            return finalizer(runner, agents)
     except TimeoutError as terr:
         # print error logs even when we timeout
         try:
@@ -182,12 +182,8 @@ async def finalize(runner, agents, timeout):
     return cmds2procs
 
 
-def finalizer(finalize_coro, runner, agents):
+def finalizer(runner, agents):
     def with_timeout(timeout):
-        return trio.run(
-            partial(finalize_coro, timeout=timeout),
-            runner,
-            agents,
-        )
+        return trio.run(partial(finalize, runner, agents, timeout=timeout))
 
     return with_timeout
