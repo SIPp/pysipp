@@ -112,8 +112,7 @@ non-blocking mode:
 finalizers = []
 for path, scen in pysipp.walk('path/to/scendirs/root/', proxyaddr=('10.10.8.1', 5060)):
     print("Running scenario collected from {}".format(path))
-    scen(block=False)
-    finalizers.append(scen)
+    finalizers.append(scen(block=False))
 
 # All scenarios should now be running concurrently so we can continue
 # program execution...
