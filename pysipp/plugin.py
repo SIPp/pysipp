@@ -6,7 +6,7 @@ import contextlib
 from . import hookspec
 
 hookimpl = pluggy.HookimplMarker("pysipp")
-mng = pluggy.PluginManager("pysipp", implprefix="pysipp")
+mng = pluggy.PluginManager("pysipp")
 mng.add_hookspecs(hookspec)
 
 
