@@ -1,0 +1,33 @@
+default_language_version:
+    # force all unspecified python hooks to run python3
+    python: python3
+repos:
+    - repo: https://github.com/asottile/reorder_python_imports
+      rev: v3.9.0
+      hooks:
+          - id: reorder-python-imports
+    - repo: https://github.com/psf/black
+      rev: 22.10.0
+      hooks:
+          - id: black
+    - repo: https://github.com/PyCQA/flake8
+      rev: 6.0.0
+      hooks:
+          - id: flake8
+            exclude: '^(testing|test_voip)/'
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.4.0
+      hooks:
+          - id: trailing-whitespace
+            args: [--markdown-linebreak-ext=md]
+          - id: check-merge-conflict
+          - id: detect-private-key
+          - id: end-of-file-fixer
+          - id: mixed-line-ending
+          - id: check-added-large-files
+            args: ["--maxkb=2000"]
+    - repo: https://github.com/Lucas-C/pre-commit-hooks
+      rev: v1.3.1
+      hooks:
+          - id: remove-crlf
+          - id: remove-tabs
