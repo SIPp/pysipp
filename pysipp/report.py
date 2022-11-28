@@ -44,7 +44,7 @@ def err_summary(agents2procs):
         return msg
 
 
-def emit_logfiles(agents2procs, level="warn", max_lines=100):
+def emit_logfiles(agents2procs, level="warning", max_lines=100):
     """Log all available SIPp log-file contents"""
     emit = getattr(log, level)
     for ua, proc in agents2procs:
