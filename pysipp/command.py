@@ -145,7 +145,7 @@ def cmdstrtype(spec):
                 getattr(self, "_init", False)
                 and (key not in self.__class__.__dict__)
                 and (key not in self._specparams)
-                and key[0] is not "_"
+                and key[0] != "_"
             ):
                 raise AttributeError(
                     "no settable public attribute '{}' defined".format(key)
