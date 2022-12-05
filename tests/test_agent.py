@@ -1,10 +1,14 @@
 """
 pysipp.agent module tests
 """
-import pytest
 import tempfile
+
+import pytest
+
 import pysipp
-from pysipp import agent, launch, plugin
+from pysipp import agent
+from pysipp import launch
+from pysipp import plugin
 
 
 @pytest.fixture

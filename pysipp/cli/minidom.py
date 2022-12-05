@@ -1,6 +1,8 @@
 import functools
 from xml.dom import minidom
-from xml.dom.minidom import getDOMImplementation, parse, Node  # noqa
+from xml.dom.minidom import getDOMImplementation
+from xml.dom.minidom import Node
+from xml.dom.minidom import parse
 
 
 @functools.total_ordering

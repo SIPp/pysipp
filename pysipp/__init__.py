@@ -13,16 +13,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 # Authors : Tyler Goodlet
 """
 pysipp - a python wrapper for launching SIPp
 """
 import sys
 from os.path import dirname
-from . import launch, report, plugin, netplug, agent
+
+from . import agent
+from . import launch
+from . import netplug
+from . import plugin
+from . import report
+from .agent import client
+from .agent import server
 from .load import iter_scen_dirs
-from .agent import client, server
 
 
 class SIPpFailure(RuntimeError):

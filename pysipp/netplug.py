@@ -2,6 +2,7 @@
 auto-networking plugin
 """
 import socket
+
 from pysipp import plugin
 
 

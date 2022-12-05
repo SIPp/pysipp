@@ -1,9 +1,13 @@
 """
 unit testing
 """
-import pytest
 import os
-from pysipp import agent, scenario, utils
+
+import pytest
+
+from pysipp import agent
+from pysipp import scenario
+from pysipp import utils
 
 
 def pytest_configure(config):

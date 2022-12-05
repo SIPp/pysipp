@@ -1,14 +1,19 @@
 """
 Wrappers for user agents which apply sensible cmdline arg defaults
 """
-from os import path
-import re
 import itertools
+import re
 import tempfile
+from collections import namedtuple
+from collections import OrderedDict
 from copy import deepcopy
+from os import path
+
 from distutils import spawn
-from collections import namedtuple, OrderedDict
-from . import command, plugin, utils
+
+from . import command
+from . import plugin
+from . import utils
 
 log = utils.get_logger()
 

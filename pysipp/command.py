@@ -1,9 +1,10 @@
 """
 Command string rendering
 """
-import string
 import socket
+import string
 from collections import OrderedDict
+
 from . import utils
 
 log = utils.get_logger()

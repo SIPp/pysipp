@@ -1,16 +1,18 @@
 """
 Launchers for invoking SIPp user agents
 """
-import subprocess
 import os
-import shlex
 import select
-import threading
+import shlex
 import signal
+import subprocess
+import threading
 import time
-from . import utils
+from collections import namedtuple
+from collections import OrderedDict
 from pprint import pformat
-from collections import OrderedDict, namedtuple
+
+from . import utils
 
 log = utils.get_logger()
 

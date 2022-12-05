@@ -1,10 +1,12 @@
 """
 End to end tests with plugin support
 """
-import pytest
-import pysipp
 import functools
 import os
+
+import pytest
+
+import pysipp
 
 
 @pytest.fixture

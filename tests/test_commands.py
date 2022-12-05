@@ -2,8 +2,9 @@
 Command generation
 """
 import pytest
-from pysipp.command import SippCmd
+
 from pysipp import utils
+from pysipp.command import SippCmd
 
 log = utils.get_logger()
 
