@@ -48,7 +48,9 @@ class PopenRunner(object):
 
     def __call__(self, cmds, block=True, rate=300, **kwargs):
         if self._waiter and self._waiter.is_alive():
-            raise RuntimeError("Not all processes from a prior run have completed")
+            raise RuntimeError(
+                "Not all processes from a prior run have completed"
+            )
         if self._procs:
             raise RuntimeError(
                 "Process results have not been cleared from previous run"

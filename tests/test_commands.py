@@ -31,7 +31,10 @@ def test_dict_field():
     # two entries
     cmd.key_vals["kitty"] = 200
     assert "-key kitty '200'" in cmd.render()
-    assert "-key kitty '200'" in cmd.render() and "-key doggy '100'" in cmd.render()
+    assert (
+        "-key kitty '200'" in cmd.render()
+        and "-key doggy '100'" in cmd.render()
+    )
 
     # three entries
     cmd.key_vals["mousey"] = 300
@@ -49,7 +52,10 @@ def test_dict_field():
         "doggy": 100,
     }
     assert "-key kitty '200'" not in cmd.render()
-    assert "-key doggy '100'" in cmd.render() and "-key mousey '300'" in cmd.render()
+    assert (
+        "-key doggy '100'" in cmd.render()
+        and "-key mousey '300'" in cmd.render()
+    )
 
     # clear all
     cmd.key_vals.clear()

@@ -34,7 +34,11 @@ class Field(object):
         obj._values[self.name] = value
 
     def render(self, value):
-        return self.fmtstr.format(**{self.name: "'{}'".format(value)}) if value else ""
+        return (
+            self.fmtstr.format(**{self.name: "'{}'".format(value)})
+            if value
+            else ""
+        )
 
 
 class AddrField(Field):
@@ -77,7 +81,8 @@ class ListField(Field):
 
     def render(self, value):
         return "".join(
-            self.fmtstr.format(**{self.name: "'{}'".format(val)}) for val in value
+            self.fmtstr.format(**{self.name: "'{}'".format(val)})
+            for val in value
         )
 
 

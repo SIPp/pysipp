@@ -78,7 +78,10 @@ def monkeypatch_element_xml(self, writer, indent="", addindent="", newl=""):
         writer.write('"')
     if self.childNodes:
         writer.write(">")
-        if len(self.childNodes) == 1 and self.childNodes[0].nodeType == Node.TEXT_NODE:
+        if (
+            len(self.childNodes) == 1
+            and self.childNodes[0].nodeType == Node.TEXT_NODE
+        ):
             self.childNodes[0].writexml(writer, "", "", "")
         else:
             writer.write(newl)

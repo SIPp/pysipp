@@ -20,7 +20,9 @@ def glob_for_scripts(directory):
     xmls = [f for f in xmls if "xml" in os.path.splitext(f)[1]]
     confpy = glob.glob(directory + "/pysipp_conf.py")
     if len(confpy) > 1:
-        raise ValueError("can only be at most one pysipp_conf.py in scen directory!")
+        raise ValueError(
+            "can only be at most one pysipp_conf.py in scen directory!"
+        )
         log.debug("discovered xmls:\n{}".format("\n".join(xmls)))
     return xmls, confpy[0] if confpy else None
 
@@ -53,7 +55,8 @@ def iter_scen_dirs(rootdir, dir_filter=lambda dir_name: dir_name):
         mod = (
             utils.load_mod(
                 confpy,
-                # use unique names (as far as scendirs go) to avoid module caching
+                # use unique names (as far as scendirs go)
+                # to avoid module caching
                 name="pysipp_confpy_{}".format(os.path.dirname(confpy)),
             )
             if confpy

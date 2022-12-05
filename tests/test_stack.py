@@ -74,7 +74,8 @@ def test_proxyaddr_with_scendir(scendir):
 
 
 def test_sync_run(scenwalk):
-    """Ensure all scenarios in the test run to completion in synchronous mode"""
+    """Ensure all scenarios in the test run to completion in
+    synchronous mode"""
     for path, scen in scenwalk():
         runner = scen(timeout=6)
         for cmd, proc in runner.get(timeout=0).items():
