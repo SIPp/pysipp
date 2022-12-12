@@ -1,14 +1,19 @@
 """
 Wrappers for user agents which apply sensible cmdline arg defaults
 """
-from os import path
-import re
 import itertools
+import re
 import tempfile
+from collections import namedtuple
+from collections import OrderedDict
 from copy import deepcopy
+from os import path
+
 from distutils import spawn
-from collections import namedtuple, OrderedDict
-from . import command, plugin, utils
+
+from . import command
+from . import plugin
+from . import utils
 
 log = utils.get_logger()
 
@@ -61,7 +66,9 @@ class UserAgent(command.SippCmd):
     ipcaddr = tuple_property(("ipc_host", "ipc_port"))
     call_load = tuple_property(("rate", "limit", "call_count"))
 
-    def __call__(self, block=True, timeout=180, runner=None, raise_exc=True, **kwargs):
+    def __call__(
+        self, block=True, timeout=180, runner=None, raise_exc=True, **kwargs
+    ):
 
         # create and configure a temp scenario
         scen = plugin.mng.hook.pysipp_conf_scen_protocol(
@@ -86,7 +93,9 @@ class UserAgent(command.SippCmd):
     def is_server(self):
         return "uas" in self.name.lower()
 
-    def iter_logfile_items(self, types_attr="_log_types", enable_screen_file=True):
+    def iter_logfile_items(
+        self, types_attr="_log_types", enable_screen_file=True
+    ):
         for name in getattr(self, types_attr):
             if name != "screen" or enable_screen_file:
                 attr_name = name + "_file"
@@ -125,11 +134,15 @@ class UserAgent(command.SippCmd):
             attr_name = "trace_" + name
             setattr(self, attr_name, True)
 
-    def enable_logging(self, logdir=None, debug=False, enable_screen_file=True):
+    def enable_logging(
+        self, logdir=None, debug=False, enable_screen_file=True
+    ):
         """Enable agent logging by appending appropriately named log file
         arguments to the underlying command.
         """
-        logattrs = self.iter_logfile_items(enable_screen_file=enable_screen_file)
+        logattrs = self.iter_logfile_items(
+            enable_screen_file=enable_screen_file
+        )
         if debug:
             logattrs = itertools.chain(
                 logattrs,
@@ -187,7 +200,9 @@ def server(**kwargs):
         "scen_name": "uas",
     }
     if "dstaddr" in kwargs:
-        raise ValueError("User agent server does not accept a destination address")
+        raise ValueError(
+            "User agent server does not accept a destination address"
+        )
     # override with user settings
     defaults.update(kwargs)
     return ua(**defaults)
@@ -221,8 +236,8 @@ _scen_defaults_template.update(deepcopy(_minimum_defaults_template))
 
 
 def Scenario(agents, **kwargs):
-    """Wraps (subsets of) user agents in global state pertaining to configuration,
-    routing, and default arguments.
+    """Wraps (subsets of) user agents in global state pertaining to
+    configuration, routing, and default arguments.
 
     If called it will invoke the standard run hooks.
     """
@@ -235,8 +250,8 @@ def Scenario(agents, **kwargs):
         if key in _defs:
             _defs[key] = kwargs.pop(key)
 
-    # if a `defaults` kwarg is passed in by the user override template values with
-    # values from that as well
+    # if a `defaults` kwarg is passed in by the user override template
+    # values with values from that as well
     user_defaults = kwargs.pop("defaults", None)
     if user_defaults:
         _defs.update(user_defaults)
@@ -247,8 +262,8 @@ def Scenario(agents, **kwargs):
 
 
 class ScenarioType(object):
-    """Wraps (subsets of) user agents in global state pertaining to configuration,
-    routing, and default arguments.
+    """Wraps (subsets of) user agents in global state pertaining to
+    configuration, routing, and default arguments.
 
     If called it will invoke the standard run hooks.
     """
@@ -292,11 +307,15 @@ class ScenarioType(object):
 
     @property
     def clients(self):
-        return OrderedDict((ua.name, ua) for ua in self._agents if ua.is_client())
+        return OrderedDict(
+            (ua.name, ua) for ua in self._agents if ua.is_client()
+        )
 
     @property
     def servers(self):
-        return OrderedDict((ua.name, ua) for ua in self._agents if ua.is_server())
+        return OrderedDict(
+            (ua.name, ua) for ua in self._agents if ua.is_server()
+        )
 
     @property
     def name(self):
@@ -429,7 +448,9 @@ class ScenarioType(object):
 
     def from_agents(self, agents=None, autolocalsocks=True, **scenkwargs):
         """Create a new scenario from prepared agents."""
-        return type(self)(self.prepare(agents), self._defaults, confpy=self.mod)
+        return type(self)(
+            self.prepare(agents), self._defaults, confpy=self.mod
+        )
 
     def __call__(
         self,

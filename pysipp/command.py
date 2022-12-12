@@ -1,9 +1,10 @@
 """
 Command string rendering
 """
-import string
 import socket
+import string
 from collections import OrderedDict
+
 from . import utils
 
 log = utils.get_logger()
@@ -33,7 +34,11 @@ class Field(object):
         obj._values[self.name] = value
 
     def render(self, value):
-        return self.fmtstr.format(**{self.name: "'{}'".format(value)}) if value else ""
+        return (
+            self.fmtstr.format(**{self.name: "'{}'".format(value)})
+            if value
+            else ""
+        )
 
 
 class AddrField(Field):
@@ -76,7 +81,8 @@ class ListField(Field):
 
     def render(self, value):
         return "".join(
-            self.fmtstr.format(**{self.name: "'{}'".format(val)}) for val in value
+            self.fmtstr.format(**{self.name: "'{}'".format(val)})
+            for val in value
         )
 
 
@@ -139,7 +145,7 @@ def cmdstrtype(spec):
                 getattr(self, "_init", False)
                 and (key not in self.__class__.__dict__)
                 and (key not in self._specparams)
-                and key[0] is not "_"
+                and key[0] != "_"
             ):
                 raise AttributeError(
                     "no settable public attribute '{}' defined".format(key)

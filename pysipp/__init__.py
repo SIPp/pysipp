@@ -13,16 +13,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 # Authors : Tyler Goodlet
 """
 pysipp - a python wrapper for launching SIPp
 """
 import sys
 from os.path import dirname
-from . import launch, report, plugin, netplug, agent
+
+from . import agent
+from . import launch
+from . import netplug
+from . import plugin
+from . import report
+from .agent import client
+from .agent import server
 from .load import iter_scen_dirs
-from .agent import client, server
 
 
 class SIPpFailure(RuntimeError):
@@ -51,7 +56,9 @@ def walk(rootpath, delay_conf_scen=False, autolocalsocks=True, **scenkwargs):
                 assert dirname(confpy.__file__) == path
 
             # predicate hook based filtering
-            res = hooks.pysipp_load_scendir(path=path, xmls=xmls, confpy=confpy)
+            res = hooks.pysipp_load_scendir(
+                path=path, xmls=xmls, confpy=confpy
+            )
             if res and not all(res):
                 continue
 
@@ -65,7 +72,8 @@ def walk(rootpath, delay_conf_scen=False, autolocalsocks=True, **scenkwargs):
                     agents.insert(0, ua)  # servers are always launched first
                 else:
                     raise ValueError(
-                        "xml script must contain one of 'uac' or 'uas':\n{}".format(xml)
+                        "xml script must contain one of 'uac' or 'uas':\n"
+                        f"{xml}"
                     )
 
             if delay_conf_scen:
@@ -88,7 +96,9 @@ def scenario(dirpath=None, proxyaddr=None, autolocalsocks=True, **scenkwargs):
     """
     if dirpath:
         # deliver single scenario from dir
-        path, scen = next(walk(dirpath, autolocalsocks=autolocalsocks, **scenkwargs))
+        path, scen = next(
+            walk(dirpath, autolocalsocks=autolocalsocks, **scenkwargs)
+        )
     else:
         with plugin.register([netplug] if autolocalsocks else []):
             # deliver the default scenario bound to loopback sockets
@@ -101,7 +111,9 @@ def scenario(dirpath=None, proxyaddr=None, autolocalsocks=True, **scenkwargs):
             )
 
     if proxyaddr:
-        assert isinstance(proxyaddr, tuple), "proxyaddr must be a (addr, port) tuple"
+        assert isinstance(
+            proxyaddr, tuple
+        ), "proxyaddr must be a (addr, port) tuple"
         scen.clientdefaults.proxyaddr = proxyaddr
 
     return scen
@@ -135,7 +147,9 @@ def pysipp_conf_scen_protocol(agents, confpy, scenkwargs):
         agents = (
             list(
                 hooks.pysipp_order_agents(
-                    agents=scen.agents, clients=scen.clients, servers=scen.servers
+                    agents=scen.agents,
+                    clients=scen.clients,
+                    servers=scen.servers,
                 )
             )
             or agents

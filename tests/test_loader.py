@@ -2,6 +2,7 @@
 Scen dir loading
 """
 import os
+
 from pysipp.load import iter_scen_dirs
 
 
