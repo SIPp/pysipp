@@ -173,8 +173,12 @@ def ua(logdir=None, **kwargs):
     """Default user agent factory.
     Returns a command string instance with sensible default arguments.
     """
+    bin_path = spawn.find_executable("sipp")
+    if not bin_path:
+        raise RuntimeError("SIPp binary (sipp) does not seem to be accessible")
+
     defaults = {
-        "bin_path": spawn.find_executable("sipp"),
+        "bin_path": bin_path,
     }
     # drop any built-in scen if a script file is provided
     if "scen_file" in kwargs:
@@ -462,7 +466,11 @@ class ScenarioType(object):
         agents = self.prepare()
         runner = runner or launch.TrioRunner()
 
-        return await launch.run_all_agents(runner, agents, timeout=timeout)
+        return await launch.run_all_agents(
+            runner,
+            agents,
+            timeout=timeout,
+        )
 
     def run(
         self,
