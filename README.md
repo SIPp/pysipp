@@ -87,7 +87,7 @@ scen()
  but this argument is only available in SIPp version >= [3.5.0](https://sourceforge.net/p/sipp/mailman/message/34041962/),
  for lower versions to run properly, this argument must be
   disable setting `enable_screen_file` to `False`:
- 
+
 ```python
 scen = pysipp.scenario(enable_screen_file=False)
 ```

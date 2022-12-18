@@ -20,38 +20,36 @@
 from setuptools import setup
 
 
-with open('README.md') as f:
+with open("README.md") as f:
     readme = f.read()
 
 
 setup(
     name="pysipp",
-    version='0.1.0',
+    version="0.1.0",
     description="A SIPp scenario launcher",
     long_description=readme,
     long_description_content_type="text/markdown",
-    license='GPLv2',
-    author='Tyler Goodlet',
-    author_email='jgbt@protonmail.com',
-    url='https://github.com/SIPp/pysipp',
-    platforms=['linux'],
-    packages=['pysipp', 'pysipp.cli'],
-    install_requires=['pluggy>=0.11.0'],
-    tests_require=['pytest'],
+    license="GPLv2",
+    author="Tyler Goodlet",
+    author_email="jgbt@protonmail.com",
+    url="https://github.com/SIPp/pysipp",
+    platforms=["linux"],
+    packages=["pysipp", "pysipp.cli"],
+    install_requires=["pluggy>=1.0.0"],
+    tests_require=["pytest"],
     entry_points={
-        'console_scripts': [
-            'sippfmt=pysipp.cli.sippfmt:main'
-        ],
+        "console_scripts": ["sippfmt=pysipp.cli.sippfmt:main"],
     },
     classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
-        'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python :: 2.7',
-        'Topic :: Software Development',
-        'Topic :: Software Development :: Testing',
-        'Topic :: Software Development :: Quality Assurance',
-        'Topic :: Utilities',
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+        "Operating System :: POSIX :: Linux",
+        "Programming Language :: Python :: 2.7",
+        "Topic :: Software Development",
+        "Topic :: Software Development :: Testing",
+        "Topic :: Software Development :: Quality Assurance",
+        "Topic :: Utilities",
     ],
 )

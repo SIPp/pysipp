@@ -1,8 +1,8 @@
-import logging
 import imp  # XXX py2.7
-import tempfile
-import os
 import inspect
+import logging
+import os
+import tempfile
 
 LOG_FORMAT = (
     "%(asctime)s %(threadName)s [%(levelname)s] %(name)s "

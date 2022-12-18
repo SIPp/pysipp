@@ -1,12 +1,14 @@
 """
 `pluggy` plugin and hook management
 """
-import pluggy
 import contextlib
+
+import pluggy
+
 from . import hookspec
 
 hookimpl = pluggy.HookimplMarker("pysipp")
-mng = pluggy.PluginManager("pysipp", implprefix="pysipp")
+mng = pluggy.PluginManager("pysipp")
 mng.add_hookspecs(hookspec)
 
 

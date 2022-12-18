@@ -77,7 +77,9 @@ def process_document(filepath):
     """
     dom = minidom.parse(filepath)
     scenario = next(
-        elem for elem in dom.childNodes if getattr(elem, "tagName", None) == "scenario"
+        elem
+        for elem in dom.childNodes
+        if getattr(elem, "tagName", None) == "scenario"
     )
 
     imp = minidom.getDOMImplementation("")
@@ -85,7 +87,9 @@ def process_document(filepath):
     doc = imp.createDocument(None, "scenario", dt)
 
     new_scen = doc.childNodes[-1]
-    new_scen.writexml = types.MethodType(minidom.monkeypatch_scenario_xml, new_scen)
+    new_scen.writexml = types.MethodType(
+        minidom.monkeypatch_scenario_xml, new_scen
+    )
 
     for elem in scenario.childNodes:
         if elem.nodeType == minidom.Node.TEXT_NODE:
@@ -101,7 +105,9 @@ def process_document(filepath):
             new_scen.appendChild(elem)
 
     # delete the last separator
-    if new_scen.childNodes and isinstance(new_scen.childNodes[-1], minidom.Newline):
+    if new_scen.childNodes and isinstance(
+        new_scen.childNodes[-1], minidom.Newline
+    ):
         del new_scen.childNodes[-1]
 
     doc.appendChild(new_scen)

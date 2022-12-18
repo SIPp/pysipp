@@ -1,7 +1,8 @@
 """
 Basic agent/scenario launching
 """
-from pysipp.agent import client, server
+from pysipp.agent import client
+from pysipp.agent import server
 from pysipp.launch import PopenRunner
 
 
