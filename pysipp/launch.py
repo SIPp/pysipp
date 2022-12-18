@@ -7,6 +7,7 @@ import subprocess
 import time
 from collections import namedtuple
 from collections import OrderedDict
+from functools import partial
 from pprint import pformat
 
 from . import utils
@@ -29,7 +30,7 @@ class SIPpFailure(RuntimeError):
     """
 
 
-class TrioRunner(object):
+class TrioRunner:
     """Run a sequence of SIPp cmds asynchronously. If any process terminates
     with a non-zero exit code, immediately cancel all remaining processes and
     collect std streams.
@@ -43,6 +44,7 @@ class TrioRunner(object):
 
     async def run(
         self,
+        nursery,
         cmds,
         rate=300,
         **kwargs
@@ -58,12 +60,16 @@ class TrioRunner(object):
         # run agent commands in sequence
         for cmd in cmds:
             log.debug(
-                "launching cmd:\n\"{}\"\n".format(cmd))
-            # proc = await trio.open_process(
-            proc = trio.Process(
-                shlex.split(cmd),
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE
+                "launching cmd:\n\"{}\"\n".format(cmd)
+            )
+
+            proc = await nursery.start(
+                partial(
+                    trio.run_process,
+                    shlex.split(cmd),
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE
+                )
             )
             self._procs[cmd] = proc
 
@@ -160,7 +166,12 @@ class TrioRunner(object):
         self._procs.clear()
 
 
-async def run_all_agents(runner, agents, timeout=180):
+async def run_all_agents(
+    runner,
+    agents,
+    timeout=180,
+
+) -> TrioRunner:
     """Run a sequencec of agents using a ``TrioRunner``.
     """
     async def finalize():
@@ -176,12 +187,15 @@ async def run_all_agents(runner, agents, timeout=180):
         return cmds2procs
 
     try:
-        await runner.run(
-            (ua.render() for ua in agents),
-            timeout=timeout
-        )
-        await finalize()
-        return runner
+        async with trio.open_nursery() as nurse:
+            await runner.run(
+                nurse,
+                (ua.render() for ua in agents),
+                timeout=timeout
+            )
+            await finalize()
+            return runner
+
     except TimeoutError as terr:
         # print error logs even when we timeout
         try:
