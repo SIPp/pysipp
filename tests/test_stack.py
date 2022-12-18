@@ -37,7 +37,6 @@ def test_collect(scenwalk):
     assert len(list(scenwalk())) == 1
 
 
-@pytest.mark.xfail
 def test_confpy_hooks(scendir):
     """Test that hooks included in a confpy file work
 
