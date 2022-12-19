@@ -1,8 +1,9 @@
-import imp  # XXX py2.7
+import importlib
 import inspect
 import logging
 import os
 import tempfile
+import types
 
 LOG_FORMAT = (
     "%(asctime)s %(threadName)s [%(levelname)s] %(name)s "
@@ -10,6 +11,19 @@ LOG_FORMAT = (
 )
 
 DATE_FORMAT = "%b %d %H:%M:%S"
+
+
+def load_source(name: str, path: str) -> types.ModuleType:
+    """
+    Replacement for deprecated imp.load_source()
+    Thanks to:
+    https://github.com/epfl-scitas/spack for pointing out the
+    important missing "spec.loader.exec_module(module)" line.
+    """
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def get_logger():
@@ -32,7 +46,7 @@ def load_mod(path, name=None):
     """Load a source file as a module"""
     name = name or os.path.splitext(os.path.basename(path))[0]
     # load module sources
-    return imp.load_source(name, path)
+    return load_source(name, path)
 
 
 def iter_data_descrs(cls):

@@ -142,7 +142,7 @@ class PopenRunner(object):
         signalled = OrderedDict()
         for cmd, proc in self.iterprocs():
             proc.send_signal(signum)
-            log.warn(
+            log.warning(
                 "sent signal '{}' to cmd '{}' with pid '{}'".format(
                     signum, cmd, proc.pid
                 )
