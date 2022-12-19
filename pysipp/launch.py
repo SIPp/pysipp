@@ -10,11 +10,10 @@ from collections import OrderedDict
 from functools import partial
 from pprint import pformat
 
-from . import utils
-
 import trio
 
 from . import report
+from . import utils
 
 log = utils.get_logger()
 
@@ -26,8 +25,7 @@ class TimeoutError(Exception):
 
 
 class SIPpFailure(RuntimeError):
-    """SIPp commands failed
-    """
+    """SIPp commands failed"""
 
 
 class TrioRunner:
@@ -42,13 +40,7 @@ class TrioRunner:
         # store proc results
         self._procs = OrderedDict()
 
-    async def run(
-        self,
-        nursery,
-        cmds,
-        rate=300,
-        **kwargs
-    ):
+    async def run(self, nursery, cmds, rate=300, **kwargs):
         if self.is_alive():
             raise RuntimeError(
                 "Not all processes from a prior run have completed"
@@ -59,16 +51,15 @@ class TrioRunner:
             )
         # run agent commands in sequence
         for cmd in cmds:
-            log.debug(
-                "launching cmd:\n\"{}\"\n".format(cmd)
-            )
+            log.debug('launching cmd:\n"{}"\n'.format(cmd))
 
             proc = await nursery.start(
                 partial(
                     trio.run_process,
                     shlex.split(cmd),
                     stdout=subprocess.DEVNULL,
-                    stderr=subprocess.PIPE
+                    stderr=subprocess.PIPE,
+                    check=False,
                 )
             )
             self._procs[cmd] = proc
@@ -125,15 +116,19 @@ class TrioRunner:
             # all procs were killed by SIGUSR1
             raise TimeoutError(
                 "pids '{}' failed to complete after '{}' seconds".format(
-                    pformat([p.pid for p in signalled.values()]), timeout)
+                    pformat([p.pid for p in signalled.values()]), timeout
+                )
             )
 
     def iterprocs(self):
         """Iterate all processes which are still alive yielding
         (cmd, proc) pairs
         """
-        return ((cmd, proc) for cmd, proc in self._procs.items()
-                if proc and proc.poll() is None)
+        return (
+            (cmd, proc)
+            for cmd, proc in self._procs.items()
+            if proc and proc.poll() is None
+        )
 
     def stop(self):
         """Stop all agents with SIGUSR1 as per SIPp's signal handling"""
@@ -160,8 +155,7 @@ class TrioRunner:
         return any(self.iterprocs())
 
     def clear(self):
-        """Clear all processes from the last run
-        """
+        """Clear all processes from the last run"""
         assert not self.is_alive(), "Not all processes have completed"
         self._procs.clear()
 
@@ -170,10 +164,9 @@ async def run_all_agents(
     runner,
     agents,
     timeout=180,
-
 ) -> TrioRunner:
-    """Run a sequencec of agents using a ``TrioRunner``.
-    """
+    """Run a sequencec of agents using a ``TrioRunner``."""
+
     async def finalize():
         # this might raise TimeoutError
         cmds2procs = await runner.get(timeout=timeout)
@@ -189,9 +182,7 @@ async def run_all_agents(
     try:
         async with trio.open_nursery() as nurse:
             await runner.run(
-                nurse,
-                (ua.render() for ua in agents),
-                timeout=timeout
+                nurse, (ua.render() for ua in agents), timeout=timeout
             )
             await finalize()
             return runner
@@ -201,5 +192,5 @@ async def run_all_agents(
         try:
             await finalize()
         except SIPpFailure as err:
-            assert 'exit code -9' in str(err)
+            assert "exit code -9" in str(err)
             raise terr
