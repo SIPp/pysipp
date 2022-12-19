@@ -118,7 +118,7 @@ def test_server():
         # test client failure on bad remote destination
         (agent.client(destaddr=("99.99.99.99", 5060)), 1, {}, RuntimeError),
         # test if server times out it is signalled
-        (agent.server(), 0, {"timeout": 1}, launch.TimeoutError),
+        (agent.server(), -9, {"timeout": 1}, launch.TimeoutError),
     ],
     ids=["ua", "uac", "uas"],
 )
