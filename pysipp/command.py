@@ -240,6 +240,7 @@ sipp_spec = [
     ("-inf {info_files} ", ListField),
     "-screen_file {screen_file} ",
     # bool flags
+    ("-nd {no_default}", BoolField),
     ("-rtp_echo {rtp_echo}", BoolField),
     ("-timeout_error {timeout_error}", BoolField),
     ("-aa {auto_answer}", BoolField),
