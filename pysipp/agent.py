@@ -6,17 +6,17 @@ import re
 import tempfile
 from collections import namedtuple
 from collections import OrderedDict
-from functools import partial
 from copy import deepcopy
+from functools import partial
 from os import path
-from distutils import spawn
 
 import trio
+from distutils import spawn
 
 from . import command
+from . import launch
 from . import plugin
 from . import utils
-from . import launch
 
 log = utils.get_logger()
 
@@ -72,11 +72,7 @@ class UserAgent(command.SippCmd):
     def __call__(self, *args, **kwargs):
         return self.run(*args, **kwargs)
 
-    def run(
-        self,
-        timeout=180,
-        **kwargs
-    ):
+    def run(self, timeout=180, **kwargs):
 
         # create and configure a temp scenario
         scen = plugin.mng.hook.pysipp_conf_scen_protocol(
@@ -472,20 +468,11 @@ class ScenarioType(object):
             timeout=timeout,
         )
 
-    def run(
-        self,
-        timeout=180,
-        **kwargs
-    ):
+    def run(self, timeout=180, **kwargs):
         """Run scenario blocking to completion."""
-        return trio.run(
-            partial(
-                self.arun,
-                timeout=timeout,
-                **kwargs
-            )
-        )
+        return trio.run(partial(self.arun, timeout=timeout, **kwargs))
 
     def __call__(self, *args, **kwargs):
         # TODO: deprecation warning here
+        kwargs.pop("block", None)
         return self.run(*args, **kwargs)
