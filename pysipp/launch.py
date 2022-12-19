@@ -174,7 +174,7 @@ async def run_all_agents(
         msg = report.err_summary(agents2procs)
         if msg:
             # report logs and stderr
-            await report.emit_logfiles(agents2procs)
+            report.emit_logfiles(agents2procs)
             raise SIPpFailure(msg)
 
         return cmds2procs
