@@ -65,18 +65,3 @@ def pysipp_conf_scen(agents, scen):
     socket arguments. It it the recommended hook for applying a default
     scenario configuration.
     """
-
-
-@hookspec(firstresult=True)
-def pysipp_new_runner():
-    """Create and return a runner instance to be used for invoking
-    multiple SIPp commands. The runner must be callable and support both a
-    `block` and `timeout` kwarg.
-    """
-
-
-@hookspec(firstresult=True)
-def pysipp_run_protocol(scen, runner, block, timeout, raise_exc):
-    """Perform steps to execute all SIPp commands usually by calling a
-    preconfigured command launcher/runner.
-    """

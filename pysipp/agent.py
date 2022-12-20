@@ -7,11 +7,14 @@ import tempfile
 from collections import namedtuple
 from collections import OrderedDict
 from copy import deepcopy
+from functools import partial
 from os import path
 
+import trio
 from distutils import spawn
 
 from . import command
+from . import launch
 from . import plugin
 from . import utils
 
@@ -66,9 +69,10 @@ class UserAgent(command.SippCmd):
     ipcaddr = tuple_property(("ipc_host", "ipc_port"))
     call_load = tuple_property(("rate", "limit", "call_count"))
 
-    def __call__(
-        self, block=True, timeout=180, runner=None, raise_exc=True, **kwargs
-    ):
+    def __call__(self, *args, **kwargs):
+        return self.run(*args, **kwargs)
+
+    def run(self, timeout=180, **kwargs):
 
         # create and configure a temp scenario
         scen = plugin.mng.hook.pysipp_conf_scen_protocol(
@@ -76,16 +80,7 @@ class UserAgent(command.SippCmd):
             confpy=None,
             scenkwargs={},
         )
-        # run the standard protocol
-        # (attach allocted runner for reuse/post-portem)
-        return plugin.mng.hook.pysipp_run_protocol(
-            scen=scen,
-            block=block,
-            timeout=timeout,
-            runner=runner,
-            raise_exc=raise_exc,
-            **kwargs
-        )
+        return scen.run(timeout=timeout, **kwargs)
 
     def is_client(self):
         return "uac" in self.name.lower()
@@ -174,8 +169,12 @@ def ua(logdir=None, **kwargs):
     """Default user agent factory.
     Returns a command string instance with sensible default arguments.
     """
+    bin_path = spawn.find_executable("sipp")
+    if not bin_path:
+        raise RuntimeError("SIPp binary (sipp) does not seem to be accessible")
+
     defaults = {
-        "bin_path": spawn.find_executable("sipp"),
+        "bin_path": bin_path,
     }
     # drop any built-in scen if a script file is provided
     if "scen_file" in kwargs:
@@ -277,6 +276,9 @@ class ScenarioType(object):
         confpy=None,
         enable_screen_file=True,
     ):
+        # placeholder for process "runner"
+        self._runner = None
+
         # agents iterable in launch-order
         self._agents = agents
         ua_attrs = UserAgent.keys()
@@ -452,21 +454,25 @@ class ScenarioType(object):
             self.prepare(agents), self._defaults, confpy=self.mod
         )
 
-    def __call__(
+    async def arun(
         self,
-        agents=None,
-        block=True,
         timeout=180,
         runner=None,
-        raise_exc=True,
-        copy_agents=False,
-        **kwargs
     ):
-        return plugin.mng.hook.pysipp_run_protocol(
-            scen=self,
-            block=block,
+        agents = self.prepare()
+        runner = runner or launch.TrioRunner()
+
+        return await launch.run_all_agents(
+            runner,
+            agents,
             timeout=timeout,
-            runner=runner,
-            raise_exc=raise_exc,
-            **kwargs
         )
+
+    def run(self, timeout=180, **kwargs):
+        """Run scenario blocking to completion."""
+        return trio.run(partial(self.arun, timeout=timeout, **kwargs))
+
+    def __call__(self, *args, **kwargs):
+        # TODO: deprecation warning here
+        kwargs.pop("block", None)
+        return self.run(*args, **kwargs)
