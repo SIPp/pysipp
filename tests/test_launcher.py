@@ -30,12 +30,12 @@ def test_agent_fails():
     assert uasproc.streams.stderr
     assert uasproc.returncode == 255, uasproc.streams.stderr
 
-    # killed by signal
+    # times out (can't do by signal - SIPp issue #176)
     uacproc = runner.get(timeout=0)[uac.render()]
     # assert not uacproc.streams.stderr  # sometimes this has a log msg?
     ret = uacproc.returncode
-    # killed by SIGUSR1 or terminates before it starts (racy)
-    assert ret == -10 or ret == 0
+    # timed out or terminates before it starts (racy)
+    assert ret == -10 or ret == 0 or ret == 1
 
 
 def test_default_scen(default_agents):
