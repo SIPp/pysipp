@@ -239,6 +239,8 @@ sipp_spec = [
     "-inf {info_file} ",
     ("-inf {info_files} ", ListField),
     "-screen_file {screen_file} ",
+    "-max_socket {max_socket} ",
+    "-trace_counts {trace_counts} ",
     # bool flags
     ("-rtp_echo {rtp_echo}", BoolField),
     ("-timeout_error {timeout_error}", BoolField),
