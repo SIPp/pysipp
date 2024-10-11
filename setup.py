@@ -26,7 +26,7 @@ with open("README.md") as f:
 
 setup(
     name="pysipp",
-    version="0.1.0",
+    version="0.2.0",
     description="A SIPp scenario launcher",
     long_description=readme,
     long_description_content_type="text/markdown",
@@ -46,7 +46,7 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
         "Operating System :: POSIX :: Linux",
-        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: >=3.7",
         "Topic :: Software Development",
         "Topic :: Software Development :: Testing",
         "Topic :: Software Development :: Quality Assurance",
