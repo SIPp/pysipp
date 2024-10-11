@@ -9,7 +9,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from os import path
 
-from distutils import spawn
+from shutil import which
 
 from . import command
 from . import plugin
@@ -175,7 +175,7 @@ def ua(logdir=None, **kwargs):
     Returns a command string instance with sensible default arguments.
     """
     defaults = {
-        "bin_path": spawn.find_executable("sipp"),
+        "bin_path": which("sipp"),
     }
     # drop any built-in scen if a script file is provided
     if "scen_file" in kwargs:
